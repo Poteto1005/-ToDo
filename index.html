@@ -14,9 +14,12 @@
             <span style="font-size: 1.4rem;">🎯</span>
             <h1 id="header-title">ダッシュボード</h1>
         </div>
-        <button id="theme-toggle" class="theme-toggle" aria-label="テーマ切り替え">
-            <span id="theme-icon">🌙</span>
-        </button>
+        <div class="header-controls">
+            <button id="settings-toggle" class="settings-toggle" aria-label="設定">⚙️</button>
+            <button id="theme-toggle" class="theme-toggle" aria-label="テーマ切り替え">
+                <span id="theme-icon">🌙</span>
+            </button>
+        </div>
     </header>
 
     <!-- メインコンテンツ -->
@@ -97,7 +100,7 @@
             <div class="split-container">
                 <!-- 左側：週間スケジュール要約 -->
                 <div class="split-left">
-                    <div class="card-title" style="margin-bottom: 8px;">週間予定サマリー</div>
+                    <div class="card-title" style="margin-bottom: 8px;">週間予定</div>
                     <div id="split-weekly-content">
                         <!-- JSで簡易的な週間スケジュールをリスト表示 -->
                     </div>
@@ -118,6 +121,10 @@
                 <button class="btn-icon" id="cal-prev" title="前月">◀</button>
                 <div class="calendar-month-center">
                     <h2 id="calendar-month-year">2026年 5月</h2>
+                    <div class="calendar-view-toggle">
+                        <button class="btn-view-toggle active" id="cal-view-month" data-view="month">月</button>
+                        <button class="btn-view-toggle" id="cal-view-week" data-view="week">週</button>
+                    </div>
                     <button class="btn-today" id="cal-today">今日</button>
                 </div>
                 <button class="btn-icon" id="cal-next" title="翌月">▶</button>
@@ -222,7 +229,7 @@
             <span class="nav-icon">📅</span>
             <span>週予定</span>
         </button>
-        <button id="nav-split" onclick="switchPage('split', '見比べ編集')">
+        <button id="nav-split" onclick="switchPage('split', '見比べ')">
             <span class="nav-icon">🌓</span>
             <span>見比べ</span>
         </button>
@@ -234,9 +241,9 @@
             <span class="nav-icon">✅</span>
             <span>Todoリスト</span>
         </button>
-        <button id="nav-settings" onclick="switchPage('settings', '設定・画像')">
+        <button id="nav-settings" onclick="switchPage('settings', '設定')">
             <span class="nav-icon">⚙️</span>
-            <span>設定・画像</span>
+            <span>設定</span>
         </button>
     </nav>
 
