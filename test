@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Digital Clock</title>
+    <style>
+        /* 背景と全体のレイアウト */
+        body {
+            background-color: #0d0d0d;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        /* 時計の外観 */
+        .clock-container {
+            text-align: center;
+            color: #00ffcc;
+            text-shadow: 0 0 20px #00ffcc;
+            border: 2px solid #00ffcc;
+            padding: 40px 60px;
+            border-radius: 15px;
+            background: rgba(0, 255, 204, 0.05);
+        }
+
+        #clock {
+            font-size: 80px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        #date {
+            font-size: 24px;
+            letter-spacing: 2px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="clock-container">
+        <div id="clock">00:00:00</div>
+        <div id="date">YYYY/MM/DD</div>
+    </div>
+
+    <script>
+        function updateClock() {
+            const now = new Date();
+
+            // 時間の取得とフォーマット（2桁に揃える）
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            
+            // 日付の取得
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const weekDays = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+            const dayOfWeek = weekDays[now.getDay()];
+
+            // 表示の更新
+            document.getElementById('clock').textContent = `${hours}:${minutes}:${seconds}`;
+            document.getElementById('date').textContent = `${year}.${month}.${day} ${dayOfWeek}`;
+        }
+
+        // 1秒ごとにupdateClock関数を実行
+        setInterval(updateClock, 1000);
+
+        // ページ読み込み時に即座に表示
+        updateClock();
+    </script>
+</body>
+</html>
