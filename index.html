@@ -1,468 +1,242 @@
 <!DOCTYPE html>
-<html lang="ja" data-theme="light">
+<html lang="ja">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ライフ・オーガナイザー - スケジュール＆Todo管理</title>
-    <link rel="stylesheet" href="style.css">
+    <title>チャイナエアライン - あなたの旅を最高の思い出に</title>
+    <meta name="description" content="チャイナエアラインで、日本語サポート付きの安心・上質な台湾旅を。快適なフラットシートや極上の機内サービスで、忘れられない旅の思い出作りをお手伝いします。">
+    <!-- Google Fontsの読み込み -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Noto+Serif+JP:wght@600;800;900&display=swap"
+        rel="stylesheet">
+    <!-- スタイルシートの読み込み -->
+    <link rel="stylesheet" href="index.css">
+    <!-- ソーシャルメディアアイコン用のFontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- JavaScriptファイルの読み込み -->
+    <script defer src="index.js"></script>
 </head>
+
 <body>
 
-    <!-- ヘッダー -->
-    <header>
-        <div class="header-logo">
-            <span style="font-size: 1.4rem;">🎯</span>
-            <h1 id="header-title">ダッシュボード</h1>
-        </div>
-        <div class="header-controls">
-            <button id="theme-toggle" class="theme-toggle" aria-label="テーマ切り替え">
-                <span id="theme-icon">🌙</span>
-            </button>
-            <button id="settings-toggle" class="settings-toggle" aria-label="設定">⚙️</button>
+    <!-- ヘッダーエリア -->
+    <header class="site-header">
+        <div class="header-container">
+            <div class="logo-area">
+                <!-- 追加された公式ロゴ画像を使用 -->
+                <img src="images/14.2.9_CI Intl Slogan Logo wz SKT Logo-S_4C REV.png" alt="チャイナエアライン ロゴ"
+                    class="logo-brand-img">
+            </div>
         </div>
     </header>
 
-    <!-- メインコンテンツ -->
-    <main>
-        
-        <!-- 1. ダッシュボード画面 -->
-        <div id="page-dashboard" class="page active">
-            <div class="dashboard-grid">
-                
-                <!-- 今日の一日（スケジュール） -->
-                <div class="card">
-                    <div class="card-title">
-                        <span>今日の予定</span>
-                        <span class="card-subtitle" id="dash-date">5月27日 (水)</span>
-                    </div>
-                    <div id="dashboard-schedule" class="dashboard-schedule-list">
-                        <!-- JSで動的に追加 -->
-                    </div>
+    <!-- メインコンテンツ領域 -->
+    <main class="site-main">
+
+        <!-- ヒーローセクション -->
+        <section class="hero-section fade-in-element">
+            <div class="hero-container">
+                <div class="hero-image-wrapper">
+                    <img src="images/elderly_couple.jpg" alt="シニア夫婦の台湾旅行" class="hero-image">
+                    <!-- PC表示用：画像の上に重ねて配置する見出し -->
+                    <h1 class="hero-headline-pc">あなたの旅を<br>最高の思い出に</h1>
+                </div>
+                <!-- モバイル表示用：画像の下に配置する見出し -->
+                <h1 class="hero-headline-mobile">あなたの旅を<br>最高の思い出に</h1>
+
+                <div class="hero-intro-text">
+                    <p class="intro-paragraph">チャイナエアラインで、<br class="mobile-break">日本語サポート付きの安心・上質な旅を。</p>
                 </div>
 
-                <!-- タスク進捗サマリー -->
-                <div class="card">
-                    <div class="card-title">タスク完了進捗</div>
-                    <div class="stat-widget">
-                        <div>
-                            <div style="font-weight: 600; font-size: 0.95rem;">Todo達成率</div>
-                            <div style="font-size: 0.75rem; color: var(--text-secondary);">今日のタスクをクリアしましょう！</div>
-                        </div>
-                        
-                        <!-- 円形進捗ゲージ -->
-                        <div class="progress-ring-container">
-                            <svg class="progress-ring-svg">
-                                <circle class="progress-ring-circle-bg" cx="35" cy="35" r="30"/>
-                                <circle class="progress-ring-circle" id="progress-circle" cx="35" cy="35" r="30"/>
-                            </svg>
-                            <span class="progress-text" id="progress-percent-text">0%</span>
-                        </div>
+                <!-- アクション呼び出しボタン1（おすすめプラン） -->
+                <div class="hero-cta-area">
+                    <button class="cta-button btn-recommend open-modal-btn" data-modal="plan-modal">
+                        <span>おすすめプランはこちら</span>
+                        <span class="arrow-icon"><i class="fa-solid fa-play"></i></span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 特徴紹介カードセクション -->
+        <section class="features-section">
+            <div class="features-grid">
+
+                <!-- 特徴カード1 -->
+                <div class="feature-card fade-in-element">
+                    <div class="card-text-area">
+                        <h2>日本語サポート充実旅を<br>トータルで安心サポート</h2>
                     </div>
-                    
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px;">
-                        <div style="background-color: var(--bg-primary); padding: 10px; border-radius: var(--radius-sm); text-align: center;">
-                            <div style="font-size: 0.7rem; color: var(--text-secondary);">完了タスク</div>
-                            <div style="font-size: 1.25rem; font-weight: 700; color: var(--accent-green);" id="todo-completed-count">0</div>
-                        </div>
-                        <div style="background-color: var(--bg-primary); padding: 10px; border-radius: var(--radius-sm); text-align: center;">
-                            <div style="font-size: 0.7rem; color: var(--text-secondary);">未完了タスク</div>
-                            <div style="font-size: 1.25rem; font-weight: 700; color: var(--accent-orange);" id="todo-active-count">0</div>
-                        </div>
+                    <div class="card-image-area">
+                        <img src="images/cabin_crew.jpg" alt="日本語サポートと客室乗務員">
                     </div>
                 </div>
 
-                <!-- 期限の近いタスク -->
-                <div class="card" style="grid-column: 1 / -1;">
-                    <div class="card-title">
-                        <span>期限の近いタスク</span>
-                        <span class="card-subtitle">期日までのカウントダウン</span>
+                <!-- 特徴カード2 -->
+                <div class="feature-card fade-in-element">
+                    <div class="card-text-area">
+                        <h2>疲れを癒すフライト<br>全席フラットシートで快適に</h2>
                     </div>
-                    <div id="dashboard-todos" class="dashboard-todos-list">
-                        <!-- JSで動的に追加 -->
-                    </div>
-                </div>
-
-            </div>
-        </div>
-
-        <!-- 2. 週間プランナー画面（時間割に代わる画面） -->
-        <div id="page-timetable" class="page">
-            <div class="weekly-container" id="weekly-planner-container">
-                <!-- JSで曜日ごとのカードを動的生成 -->
-            </div>
-            <div style="margin-top: 16px; font-size: 0.75rem; color: var(--text-secondary); text-align: center;">
-                ※各曜日の「＋予定」から、繰り返しの週間予定（仕事、習い事、ルーティン等）を追加できます。
-            </div>
-        </div>
-
-        <!-- 3. 見比べ画面 (左右分割) -->
-        <div id="page-split" class="page">
-            <div class="split-container">
-                <!-- 左側：週間スケジュール要約 -->
-                <div class="split-left">
-                    <div class="card-title" style="margin-bottom: 8px;">週間予定</div>
-                    <div id="split-weekly-content">
-                        <!-- JSで簡易的な週間スケジュールをリスト表示 -->
+                    <div class="card-image-area">
+                        <img src="images/business_class_cabin.jpg" alt="フラットシートビジネスクラス">
                     </div>
                 </div>
-                <!-- 右側：Todoリスト -->
-                <div class="split-right">
-                    <div class="card-title" style="margin-bottom: 8px;">Todoリスト</div>
-                    <div id="split-todo-content" class="todo-list-wrapper">
-                        <!-- JSで簡略版Todoリストを描画 -->
+
+                <!-- 特徴カード3 -->
+                <div class="feature-card fade-in-element">
+                    <div class="card-text-area">
+                        <h2>機内での時間も極上のリラックスを追求</span></h2>
+                    </div>
+                    <div class="card-image-area">
+                        <img src="images/business_class_window_seat.jpg" alt="快適な機内リラックススペース">
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- 4. カレンダー画面 -->
-        <div id="page-calendar" class="page">
-            <div class="calendar-header">
-                <button class="btn-icon" id="cal-prev" title="前へ">◀</button>
-                <div class="calendar-header-center">
-                    <h2 id="calendar-display-text">2026年 5月</h2>
-                </div>
-                <button class="btn-icon" id="cal-next" title="次へ">▶</button>
-            </div>
-            
-            <!-- カレンダー表示エリア -->
-            <div class="calendar-container">
-                <div class="calendar-content" id="calendar-content">
-                    <!-- JSで動的に生成 -->
-                </div>
-            </div>
-            
-            <!-- 操作ボタン -->
-            <div class="calendar-footer">
-                <button class="btn-today" id="cal-today">今日</button>
-            </div>
-        </div>
-
-        <!-- 5. Todoリスト画面 -->
-        <div id="page-todo" class="page">
-            <!-- フィルターコントロール -->
-            <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px;">
-                <!-- 状態フィルター -->
-                <div style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px;">
-                    <button class="btn btn-primary" id="todo-filter-all">すべて</button>
-                    <button class="btn btn-secondary" id="todo-filter-active">未完了</button>
-                    <button class="btn btn-secondary" id="todo-filter-completed">完了済み</button>
-                </div>
-                <!-- カテゴリタグフィルター -->
-                <div style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; border-top: 1px solid var(--border); padding-top: 8px;">
-                    <button class="btn btn-secondary" style="font-size:0.75rem; padding: 4px 10px;" id="tag-filter-all">全タグ</button>
-                    <button class="btn btn-secondary" style="font-size:0.75rem; padding: 4px 10px;" id="tag-filter-work">💼 仕事</button>
-                    <button class="btn btn-secondary" style="font-size:0.75rem; padding: 4px 10px;" id="tag-filter-private">🏠 プライベート</button>
-                    <button class="btn btn-secondary" style="font-size:0.75rem; padding: 4px 10px;" id="tag-filter-shopping">🛒 買い物</button>
-                    <button class="btn btn-secondary" style="font-size:0.75rem; padding: 4px 10px;" id="tag-filter-other">💡 その他</button>
-                </div>
-            </div>
-            <div class="todo-list-wrapper" id="todo-list-container">
-                <!-- JSで動的にTodoカードを描画 -->
-            </div>
-        </div>
-
-        <!-- 6. 設定・画像管理画面 -->
-        <div id="page-settings" class="page">
-            <div class="card">
-                <div class="card-title">参考用画像・スケジュール写真の登録</div>
-                <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 14px;">
-                    仕事のシフト表、カレンダーのスクショ、トレーニングメニューなどの画像を登録し、いつでも参照できます。
-                </p>
-                <div class="image-upload-area" id="image-upload-area">
-                    <span style="font-size: 2rem; display: block; margin-bottom: 8px;">📷</span>
-                    <span style="font-size: 0.85rem; font-weight: 600;">画像をアップロード / カメラで撮影</span>
-                    <input type="file" id="timetable-image-input" accept="image/*" style="display: none;">
-                </div>
-                <div class="image-preview-container" id="image-preview-container" style="display: none;">
-                    <button class="image-remove-btn" id="image-remove-btn" title="画像を削除">✕</button>
-                    <img id="timetable-image-preview" src="" alt="登録スケジュール画像">
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-title">表示設定</div>
-                <div class="setting-item">
-                    <div>
-                        <div style="font-weight: 600; font-size: 0.9rem;">土曜日・日曜日を表示</div>
-                        <div style="font-size: 0.75rem; color: var(--text-secondary);">週間プランナーに土日を含めます</div>
+                <!-- 特徴カード4 -->
+                <div class="feature-card fade-in-element">
+                    <div class="card-text-area">
+                        <h2>台湾観光で
+                            忘れられない<br>景色が待っています</h2>
                     </div>
-                    <label class="switch">
-                        <input type="checkbox" id="setting-saturday" checked>
-                        <span class="slider"></span>
-                    </label>
-                </div>
-                <div class="setting-item">
-                    <div>
-                        <div style="font-weight: 600; font-size: 0.9rem;">カレンダーを月曜始まりにする</div>
-                        <div style="font-size: 0.75rem; color: var(--text-secondary);">オフにすると日曜始まりになります</div>
+                    <div class="card-image-area">
+                        <img src="images/taipei_night.png" alt="台湾台北の美しい夜景">
                     </div>
-                    <label class="switch">
-                        <input type="checkbox" id="setting-monday-start" checked>
-                        <span class="slider"></span>
-                    </label>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- アクション呼び出しバナーセクション -->
+        <section class="cta-banner-section fade-in-element">
+            <div class="cta-banner-container">
+                <div class="cta-banner-image-wrapper">
+                    <img src="images/airplane_sky.jpg" alt="青空を飛ぶチャイナエアライン航空機" class="cta-banner-image">
+                    <div class="cta-banner-overlay">
+                        <p class="cta-overlay-text">皆様のご利用を、<br>心よりお待ちしております</p>
+                    </div>
+                </div>
+
+                <div class="cta-banner-button-area">
+                    <button class="cta-button btn-search open-modal-btn" data-modal="booking-modal">
+                        <span>空席状況を今すぐチェック</span>
+                        <span class="arrow-icon"><i class="fa-solid fa-play"></i></span>
+                    </button>
                 </div>
             </div>
-
-            <div class="card" style="border-color: rgba(239, 68, 68, 0.2);">
-                <div class="card-title" style="color: var(--accent-red);">データ管理</div>
-                <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 14px;">
-                    アプリに保存されているすべてのデータ（スケジュール、Todo、設定、画像）を完全に初期化します。
-                </p>
-                <button class="btn btn-danger btn-full" id="btn-reset-data">データをすべて初期化する</button>
-            </div>
-        </div>
+        </section>
 
     </main>
 
-    <!-- 新規作成ダイアログを呼び出すフローティングアクションボタン(FAB) -->
-    <button class="fab" id="fab" title="新規追加">＋</button>
-
-    <!-- ボトムナビゲーション -->
-    <nav>
-        <button id="nav-dashboard" class="active" onclick="switchPage('dashboard', 'ダッシュボード')">
-            <span class="nav-icon">🏠</span>
-            <span>ダッシュボード</span>
-        </button>
-        <button id="nav-timetable" onclick="switchPage('timetable', '週間プランナー')">
-            <span class="nav-icon">📅</span>
-            <span>週予定</span>
-        </button>
-        <button id="nav-split" onclick="switchPage('split', '見比べ')">
-            <span class="nav-icon">🌓</span>
-            <span>見比べ</span>
-        </button>
-        <button id="nav-calendar" onclick="switchPage('calendar', 'カレンダー')">
-            <span class="nav-icon">🗓️</span>
-            <span>カレンダー</span>
-        </button>
-        <button id="nav-todo" onclick="switchPage('todo', 'Todoリスト')">
-            <span class="nav-icon">✅</span>
-            <span>Todoリスト</span>
-        </button>
-        <button id="nav-settings" onclick="switchPage('settings', '設定')">
-            <span class="nav-icon">⚙️</span>
-            <span>設定</span>
-        </button>
-    </nav>
-
-
-    <!-- ================= モーダル群 ================= -->
-
-    <!-- 1. 新規追加選択モーダル -->
-    <div class="modal-overlay" id="modal-add-selector">
-        <div class="modal">
-            <div class="modal-header">
-                <h3 class="modal-title">新規追加</h3>
-                <button class="modal-close" onclick="closeModal('modal-add-selector')">✕</button>
+    <!-- フッター領域 -->
+    <footer class="site-footer">
+        <div class="footer-container">
+            <div class="footer-socials">
+                <a href="#" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+                <a href="#" aria-label="X (Twitter)" class="footer-social-x-link">
+                    <img src="images/twitter_x_new_logo_x_rounded_icon_256078.png" alt="X" class="footer-x-icon">
+                </a>
+                <a href="#" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
             </div>
-            <div style="display: flex; flex-direction: column; gap: 12px;">
-                <button class="btn btn-secondary" onclick="openAddWeeklyEventFromSelector()" style="justify-content: flex-start; padding: 14px;">
-                    <span style="font-size: 1.25rem; margin-right: 8px;">🔄</span>
-                    習慣・毎週の予定を登録する
-                </button>
-                <button class="btn btn-secondary" onclick="openAddTodoFromSelector()" style="justify-content: flex-start; padding: 14px;">
-                    <span style="font-size: 1.25rem; margin-right: 8px;">✅</span>
-                    Todo（期限ありのタスク）を追加する
-                </button>
-                <button class="btn btn-secondary" onclick="openAddEventFromSelector()" style="justify-content: flex-start; padding: 14px;">
-                    <span style="font-size: 1.25rem; margin-right: 8px;">📅</span>
-                    特定の日の予定をカレンダーに追加する
-                </button>
+            <div class="footer-logo">
+                <!-- 追加された公式ロゴ画像を使用（フッター用） -->
+                <img src="images/14.2.9_CI Intl Slogan Logo wz SKT Logo-S_4C REV.png" alt="チャイナエアライン ロゴ"
+                    class="logo-brand-img-footer">
+            </div>
+            <p class="copyright">&copy; 2026 China Airlines. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- おすすめプラン紹介用のインタラクティブモーダル -->
+    <div id="plan-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="close-modal-btn" aria-label="閉じる">&times;</button>
+            <h3 class="modal-title">おすすめの台湾特別プラン</h3>
+            <div class="plan-list">
+                <div class="plan-item">
+                    <span class="plan-badge">ビジネスクラス</span>
+                    <h4>上質台湾旅 3泊4日極上リラックスパッケージ</h4>
+                    <p class="plan-desc">日本語フルサポート、極上ビジネスクラス往復と台北5つ星ホテルがセットになったプレミアムプラン。</p>
+                    <div class="plan-price-row">
+                        <span class="price">¥148,000〜</span>
+                        <button class="btn-select-plan">詳細・予約</button>
+                    </div>
+                </div>
+                <div class="plan-item">
+                    <span class="plan-badge economy">エコノミークラス</span>
+                    <h4>安心サポート付き 週末台北フリープラン 3日間</h4>
+                    <p class="plan-desc">初めての台湾でも安心。空港送迎＆日本語現地スタッフサポート付きで快適な台北観光を。</p>
+                    <div class="plan-price-row">
+                        <span class="price">¥58,000〜</span>
+                        <button class="btn-select-plan">詳細・予約</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- 2. 週間スケジュール登録・編集モーダル -->
-    <div class="modal-overlay" id="modal-weekly-edit">
-        <div class="modal">
-            <div class="modal-header">
-                <h3 class="modal-title" id="weekly-modal-title">習慣・週間予定の登録</h3>
-                <button class="modal-close" onclick="closeModal('modal-weekly-edit')">✕</button>
-            </div>
-            <form id="form-weekly">
-                <input type="hidden" id="weekly-id">
-                
-                <div class="form-group">
-                    <label for="weekly-title">予定・ルーティン名 *</label>
-                    <input type="text" id="weekly-title" class="form-control" placeholder="例: ヨガ教室、英会話、ゴミ出し" required>
+    <!-- 空席検索用のインタラクティブモーダル -->
+    <div id="booking-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="close-modal-btn" aria-label="閉じる">&times;</button>
+            <h3 class="modal-title">空席状況を今すぐチェック</h3>
+            <form id="booking-search-form" class="modal-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="dep-city">出発地</label>
+                        <select id="dep-city" required>
+                            <option value="TYO">東京 (羽田/成田)</option>
+                            <option value="OSA">大阪 (関西)</option>
+                            <option value="NGO">名古屋 (中部)</option>
+                            <option value="FUK">福岡</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="arr-city">目的地</label>
+                        <select id="arr-city" required>
+                            <option value="TPE">台北 (桃園)</option>
+                            <option value="TSA">台北 (松山)</option>
+                            <option value="KHH">高雄</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="weekly-day-select">曜日 *</label>
-                        <select id="weekly-day-select" class="form-control">
-                            <option value="1">月曜日</option>
-                            <option value="2">火曜日</option>
-                            <option value="3">水曜日</option>
-                            <option value="4">木曜日</option>
-                            <option value="5">金曜日</option>
-                            <option value="6" id="weekly-opt-sat">土曜日</option>
-                            <option value="0" id="weekly-opt-sun">日曜日</option>
-                        </select>
+                        <label for="dep-date">往路出発日</label>
+                        <input type="date" id="dep-date" required>
                     </div>
                     <div class="form-group">
-                        <label for="weekly-timeblock-select">時間枠 *</label>
-                        <select id="weekly-timeblock-select" class="form-control" onchange="toggleWeeklyTimeInput()">
-                            <option value="morning">🌅 朝 (〜12時)</option>
-                            <option value="afternoon">☀️ 昼 (12時〜18時)</option>
-                            <option value="evening">🌙 夜 (18時〜)</option>
-                            <option value="specific">🕰️ 時間を指定する</option>
-                        </select>
+                        <label for="ret-date">復路出発日</label>
+                        <input type="date" id="ret-date" required>
                     </div>
                 </div>
-                
-                <!-- 具体的な時間設定 (時間指定選択時のみ表示) -->
-                <div class="form-row" id="weekly-time-input-row" style="display: none;">
-                    <div class="form-group">
-                        <label for="weekly-start-time">開始時刻</label>
-                        <input type="time" id="weekly-start-time" class="form-control" value="09:00">
-                    </div>
-                    <div class="form-group">
-                        <label for="weekly-end-time">終了時刻</label>
-                        <input type="time" id="weekly-end-time" class="form-control" value="10:00">
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="weekly-category">カテゴリ</label>
-                        <select id="weekly-category" class="form-control">
-                            <option value="work">💼 仕事</option>
-                            <option value="private" selected>🏠 プライベート</option>
-                            <option value="shopping">🛒 買い物</option>
-                            <option value="other">💡 その他</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="weekly-color">テーマカラー</label>
-                        <input type="hidden" id="weekly-color" value="#4F46E5">
-                        <div class="color-picker" id="weekly-color-picker">
-                            <!-- JSで生成 -->
-                        </div>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="weekly-notes">詳細メモ</label>
-                    <textarea id="weekly-notes" class="form-control" rows="2" placeholder="持ち物、場所、備考など"></textarea>
-                </div>
-                
-                <div style="display: flex; gap: 10px; margin-top: 20px;">
-                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-weekly-edit')" style="flex: 1;">キャンセル</button>
-                    <button type="submit" class="btn btn-primary" style="flex: 1;">保存する</button>
-                </div>
+                <button type="submit" class="btn-submit-search">空席を探す</button>
             </form>
-        </div>
-    </div>
 
-    <!-- 3. Todo登録・編集モーダル -->
-    <div class="modal-overlay" id="modal-todo-edit">
-        <div class="modal">
-            <div class="modal-header">
-                <h3 class="modal-title" id="todo-modal-title">Todo・タスクの追加</h3>
-                <button class="modal-close" onclick="closeModal('modal-todo-edit')">✕</button>
+            <!-- ローディングスピナー（初期状態は非表示） -->
+            <div id="search-loading" class="search-status-container hidden">
+                <div class="spinner"></div>
+                <p>空席状況を照会中...</p>
             </div>
-            <form id="form-todo">
-                <input type="hidden" id="todo-id">
-                <div class="form-group">
-                    <label for="todo-title">タスク名 *</label>
-                    <input type="text" id="todo-title" class="form-control" placeholder="例: レポート提出、食材買い出し、メール返信" required>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="todo-category">カテゴリ</label>
-                        <select id="todo-category" class="form-control">
-                            <option value="work">💼 仕事</option>
-                            <option value="private" selected>🏠 プライベート</option>
-                            <option value="shopping">🛒 買い物</option>
-                            <option value="other">💡 その他</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="todo-priority">優先度</label>
-                        <select id="todo-priority" class="form-control">
-                            <option value="low">低</option>
-                            <option value="medium" selected>中</option>
-                            <option value="high">高（最重要）</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="todo-deadline">締め切り日時 *</label>
-                    <input type="datetime-local" id="todo-deadline" class="form-control" required>
-                </div>
-                <div class="form-group">
-                    <label for="todo-notes">メモ詳細</label>
-                    <textarea id="todo-notes" class="form-control" rows="2" placeholder="詳細や参考URLなど"></textarea>
-                </div>
-                <div style="display: flex; gap: 10px; margin-top: 20px;">
-                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-todo-edit')" style="flex: 1;">キャンセル</button>
-                    <button type="submit" class="btn btn-primary" style="flex: 1;">保存する</button>
-                </div>
-            </form>
-        </div>
-    </div>
 
-    <!-- 4. カレンダー予定追加モーダル -->
-    <div class="modal-overlay" id="modal-event-edit">
-        <div class="modal">
-            <div class="modal-header">
-                <h3 class="modal-title" id="event-modal-title">予定の追加</h3>
-                <button class="modal-close" onclick="closeModal('modal-event-edit')">✕</button>
-            </div>
-            <form id="form-event">
-                <input type="hidden" id="event-id">
-                <div class="form-group">
-                    <label for="event-title">予定タイトル *</label>
-                    <input type="text" id="event-title" class="form-control" placeholder="例: 美容院、ミーティング、旅行" required>
+            <!-- 検索結果（初期状態は非表示） -->
+            <div id="search-results" class="search-status-container hidden">
+                <h4 class="results-title">検索結果 (空席あり)</h4>
+                <div class="flight-result-card">
+                    <div class="flight-route">往路: CI101 羽田 → 桃園</div>
+                    <div class="flight-time">08:55発 - 11:30着 | ビジネスクラス残席僅か</div>
                 </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="event-start">開始日時 *</label>
-                        <input type="datetime-local" id="event-start" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="event-end">終了日時</label>
-                        <input type="datetime-local" id="event-end" class="form-control">
-                    </div>
+                <div class="flight-result-card">
+                    <div class="flight-route">復路: CI102 桃園 → 羽田</div>
+                    <div class="flight-time">12:45発 - 16:50着 | エコノミークラス空席あり</div>
                 </div>
-                <div class="form-group">
-                    <label>テーマカラー</label>
-                    <div class="color-picker" id="event-color-picker">
-                        <!-- JSでカラーオプションを生成 -->
-                    </div>
-                    <input type="hidden" id="event-color" value="#0EA5E9">
-                </div>
-                <div class="form-group">
-                    <label for="event-notes">メモ</label>
-                    <textarea id="event-notes" class="form-control" rows="2" placeholder="持ち物や場所など"></textarea>
-                </div>
-                <div style="display: flex; gap: 10px; margin-top: 20px;">
-                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-event-edit')" style="flex: 1;">キャンセル</button>
-                    <button type="submit" class="btn btn-primary" style="flex: 1;">保存する</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- 5. 日にち詳細（カレンダー長押し・クリック時）モーダル -->
-    <div class="modal-overlay" id="modal-day-details">
-        <div class="modal">
-            <div class="modal-header">
-                <h3 class="modal-title" id="day-details-title">2026年5月27日 の予定</h3>
-                <button class="modal-close" onclick="closeModal('modal-day-details')">✕</button>
-            </div>
-            <div id="day-events-list" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; max-height: 300px; overflow-y: auto;">
-                <!-- JSでその日の予定を表示 -->
-            </div>
-            <div style="display: flex; gap: 8px;">
-                <button class="btn btn-secondary" onclick="closeModal('modal-day-details')" style="flex: 1;">閉じる</button>
-                <button class="btn btn-primary" id="btn-add-event-for-day" style="flex: 1;">＋ 予定を追加</button>
+                <button class="btn-proceed-booking" onclick="alert('ご予約手続きへ進みます。')">この便を選択して予約へ</button>
             </div>
         </div>
     </div>
 
-    <!-- アプリケーションロジック -->
-    <script src="app.js"></script>
 </body>
+
 </html>
