@@ -116,6 +116,16 @@ function loadData() {
         if (state.settings.theme === undefined) state.settings.theme = 'light';
     }
     if (state.timetableImage === undefined) state.timetableImage = "";
+    
+    state.todos.forEach(t => {
+        if (t.recurrence === undefined) t.recurrence = "none";
+    });
+    state.events.forEach(e => {
+        if (e.allDay === undefined) e.allDay = false;
+        if (e.recurrence === undefined) e.recurrence = "none";
+        if (e.location === undefined) e.location = "";
+        if (e.travelTime === undefined) e.travelTime = 0;
+    });
 }
 
 function saveData() {
@@ -147,10 +157,8 @@ function renderDashboard() {
     // 今日の週間定期
     const todayWeekly = state.weeklySchedule.filter(w => w.day === todayDayOfWeek);
 
-    // 今日のカレンダー単発イベント
-    const todayEvents = state.events.filter(ev => {
-        return ev.start.split("T")[0] === todayDateISO;
-    });
+    // 今日のカレンダー単発・繰り返しイベント
+    const todayEvents = state.events.filter(ev => isEventOnDate(ev, todayDateISO));
 
     // 予定を合流し、並べ替えて表示
     let mergedSchedule = [];
@@ -181,17 +189,33 @@ function renderDashboard() {
     });
 
     todayEvents.forEach(ev => {
-        const timePart = ev.start.split("T")[1] || "00:00";
-        const parts = timePart.split(":");
-        const sortVal = parseInt(parts[0]) + (parseInt(parts[1]) / 60);
+        let timeLabel = "📌 ";
+        let sortVal = 0;
+        if (ev.allDay) {
+            timeLabel += "終日";
+            sortVal = 0;
+        } else {
+            const timePart = ev.start.split("T")[1] || "00:00";
+            timeLabel += timePart;
+            const parts = timePart.split(":");
+            sortVal = parseInt(parts[0]) + (parseInt(parts[1]) / 60);
+        }
+
+        let notesText = ev.notes || "";
+        if (ev.location) {
+            notesText = `📍 ${ev.location}` + (notesText ? ` | ${notesText}` : "");
+        }
+        if (ev.travelTime) {
+            notesText = `🚗 移動: ${ev.travelTime}分` + (notesText ? ` | ${notesText}` : "");
+        }
 
         mergedSchedule.push({
             type: 'event',
             title: ev.title,
-            timeLabel: `📌 ${timePart}`,
+            timeLabel: timeLabel,
             sortVal: sortVal,
             color: ev.color,
-            notes: ev.notes,
+            notes: notesText,
             id: ev.id
         });
     });
@@ -216,9 +240,6 @@ function renderDashboard() {
                         ${catLabel}
                     </div>
                     ${item.notes ? `<div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">${item.notes}</div>` : ''}
-                </div>
-                <div style="font-size:0.75rem; color:var(--text-secondary); cursor:pointer; font-weight:600;" onclick="jumpToPage('${item.type === 'weekly' ? 'timetable' : 'calendar'}')">
-                    詳細 ➔
                 </div>
             `;
             scheduleContainer.appendChild(card);
@@ -414,7 +435,7 @@ function renderSplitView() {
 
         // 今日の習慣予定と単発予定
         const todayWeekly = state.weeklySchedule.filter(w => w.day === todayDayOfWeek);
-        const todayEvents = state.events.filter(ev => ev.start.split("T")[0] === todayDateISO);
+        const todayEvents = state.events.filter(ev => isEventOnDate(ev, todayDateISO));
 
         // 予定を分単位にパース
         let parsed = [];
@@ -452,19 +473,35 @@ function renderSplitView() {
         });
 
         todayEvents.forEach(ev => {
-            const startStr = ev.start.split("T")[1] || "09:00";
-            const sParts = startStr.split(":");
-            const start = parseInt(sParts[0]) * 60 + parseInt(sParts[1]);
-            
-            let end;
-            if (ev.end) {
-                const endStr = ev.end.split("T")[1] || "10:00";
+            let start, end;
+            if (ev.allDay) {
+                start = 480; // 08:00
+                end = 1320;  // 22:00
+            } else {
+                const startStr = ev.start.split("T")[1] || "09:00";
+                const sParts = startStr.split(":");
+                start = parseInt(sParts[0]) * 60 + parseInt(sParts[1]);
+                
+                let endStr = "10:00";
+                if (ev.end) {
+                    endStr = ev.end.split("T")[1] || "10:00";
+                } else {
+                    const endH = String(Math.floor(start / 60) + 1).padStart(2, '0');
+                    const endM = String(start % 60).padStart(2, '0');
+                    endStr = `${endH}:${endM}`;
+                }
                 const eParts = endStr.split(":");
                 end = parseInt(eParts[0]) * 60 + parseInt(eParts[1]);
-            } else {
-                end = start + 60;
             }
             if (end <= start) end = start + 60;
+
+            let notesText = ev.notes || "";
+            if (ev.location) {
+                notesText = `📍 ${ev.location}` + (notesText ? ` | ${notesText}` : "");
+            }
+            if (ev.travelTime) {
+                notesText = `🚗 移動: ${ev.travelTime}分` + (notesText ? ` | ${notesText}` : "");
+            }
 
             parsed.push({
                 id: ev.id,
@@ -473,7 +510,7 @@ function renderSplitView() {
                 end: end,
                 color: ev.color || "var(--accent-blue)",
                 type: 'event',
-                notes: ev.notes
+                notes: notesText
             });
         });
 
@@ -831,7 +868,7 @@ function renderCalendarCells(cells, grid, isMonth) {
         eventsContainer.className = "calendar-events-container";
 
         // データ取得
-        const dayEvents = state.events.filter(ev => ev.start.split("T")[0] === dateISO);
+        const dayEvents = state.events.filter(ev => isEventOnDate(ev, dateISO));
         const dayTodos = state.todos.filter(t => t.deadline.split("T")[0] === dateISO && !t.completed);
         const dayWeekly = c.currentMonth ? state.weeklySchedule.filter(w => w.day === dow) : [];
 
@@ -871,6 +908,7 @@ function renderCalendarCells(cells, grid, isMonth) {
 // --- 5. Todoリスト画面の描画 ---
 let currentTodoFilter = 'all';     // 'all', 'active', 'completed'
 let currentTagFilter = 'all';      // 'all', 'work', 'private', 'shopping', 'other'
+let currentTodoSort = 'deadline-asc'; // 'deadline-asc', 'deadline-desc', 'priority-desc'
 
 function renderTodoList() {
     const container = document.getElementById("todo-list-container");
@@ -891,12 +929,24 @@ function renderTodoList() {
         filtered = filtered.filter(t => t.category === currentTagFilter);
     }
 
-    // ソート (未完了優先、締切順)
+    // ソート (未完了優先、その後は指定された順)
     filtered.sort((a, b) => {
         if (a.completed !== b.completed) {
             return a.completed ? 1 : -1;
         }
-        return new Date(a.deadline) - new Date(b.deadline);
+        if (currentTodoSort === 'deadline-desc') {
+            return new Date(b.deadline) - new Date(a.deadline);
+        } else if (currentTodoSort === 'priority-desc') {
+            const priorityVal = { high: 3, medium: 2, low: 1 };
+            const aVal = priorityVal[a.priority] || 2;
+            const bVal = priorityVal[b.priority] || 2;
+            if (bVal !== aVal) {
+                return bVal - aVal;
+            }
+            return new Date(a.deadline) - new Date(b.deadline);
+        } else {
+            return new Date(a.deadline) - new Date(b.deadline);
+        }
     });
 
     if (filtered.length === 0) {
@@ -1086,6 +1136,66 @@ function toggleWeeklyTimeInput() {
     }
 }
 
+function toggleEventAllDay() {
+    const isAllDay = document.getElementById("event-allday").checked;
+    const startInput = document.getElementById("event-start");
+    const endInput = document.getElementById("event-end");
+    const startLabel = document.getElementById("lbl-event-start");
+    const endLabel = document.getElementById("lbl-event-end");
+
+    const startVal = startInput.value;
+    const endVal = endInput.value;
+
+    if (isAllDay) {
+        startInput.type = "date";
+        endInput.type = "date";
+        if (startLabel) startLabel.innerText = "開始日 *";
+        if (endLabel) endLabel.innerText = "終了日";
+        
+        if (startVal && startVal.includes("T")) startInput.value = startVal.split("T")[0];
+        if (endVal && endVal.includes("T")) endInput.value = endVal.split("T")[0];
+    } else {
+        startInput.type = "datetime-local";
+        endInput.type = "datetime-local";
+        if (startLabel) startLabel.innerText = "開始日時 *";
+        if (endLabel) endLabel.innerText = "終了日時";
+
+        if (startVal && !startVal.includes("T")) startInput.value = startVal + "T10:00";
+        if (endVal && !endVal.includes("T")) endInput.value = endVal + "T11:00";
+    }
+}
+
+function isEventOnDate(ev, dateStr) {
+    const evStartStr = ev.start.split("T")[0];
+    
+    if (!ev.recurrence || ev.recurrence === 'none') {
+        if (ev.end) {
+            const evEndStr = ev.end.split("T")[0];
+            return dateStr >= evStartStr && dateStr <= evEndStr;
+        }
+        return evStartStr === dateStr;
+    }
+    
+    if (dateStr < evStartStr) return false;
+    
+    const targetDate = new Date(dateStr);
+    const startDate = new Date(evStartStr);
+    
+    if (ev.recurrence === 'daily') {
+        return true;
+    }
+    
+    if (ev.recurrence === 'weekly') {
+        return targetDate.getDay() === startDate.getDay();
+    }
+    
+    if (ev.recurrence === 'monthly') {
+        return targetDate.getDate() === startDate.getDate();
+    }
+    
+    return false;
+}
+
 function openAddWeeklyEvent(day = 1) {
     document.getElementById("weekly-modal-title").innerText = "習慣・週間予定の追加";
     document.getElementById("form-weekly").reset();
@@ -1159,6 +1269,7 @@ function openAddTodo(dateStr = "") {
     document.getElementById("todo-modal-title").innerText = "Todo・タスクの追加";
     document.getElementById("form-todo").reset();
     document.getElementById("todo-id").value = "";
+    document.getElementById("todo-recurrence").value = "none";
 
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -1186,6 +1297,7 @@ function openEditTodo(id, event) {
     document.getElementById("todo-category").value = todo.category;
     document.getElementById("todo-priority").value = todo.priority;
     document.getElementById("todo-deadline").value = todo.deadline;
+    document.getElementById("todo-recurrence").value = todo.recurrence || "none";
     document.getElementById("todo-notes").value = todo.notes || "";
 
     openModal("modal-todo-edit");
@@ -1207,7 +1319,35 @@ function toggleTodoCompleted(id, event) {
     if (event) event.stopPropagation();
     const todo = state.todos.find(t => t.id === id);
     if (todo) {
+        const wasCompleted = todo.completed;
         todo.completed = !todo.completed;
+
+        // 完了(未完了から完了へ)かつ繰り返し設定が'none'以外の場合、次の期日のTodoを自動生成
+        if (!wasCompleted && todo.completed && todo.recurrence && todo.recurrence !== 'none') {
+            const currentDeadline = new Date(todo.deadline);
+            let nextDeadline = new Date(currentDeadline);
+
+            if (todo.recurrence === 'daily') {
+                nextDeadline.setDate(currentDeadline.getDate() + 1);
+            } else if (todo.recurrence === 'weekly') {
+                nextDeadline.setDate(currentDeadline.getDate() + 7);
+            } else if (todo.recurrence === 'monthly') {
+                nextDeadline.setMonth(currentDeadline.getMonth() + 1);
+            }
+
+            const nextTodo = {
+                id: "todo-" + Date.now(),
+                title: todo.title,
+                category: todo.category,
+                priority: todo.priority,
+                deadline: formatDateTimeLocal(nextDeadline),
+                notes: todo.notes || "",
+                recurrence: todo.recurrence,
+                completed: false
+            };
+            state.todos.push(nextTodo);
+        }
+
         saveData();
         renderTodoList();
         renderDashboard();
@@ -1222,6 +1362,11 @@ function openAddEvent(dateStr = "") {
     document.getElementById("event-modal-title").innerText = "予定の追加";
     document.getElementById("form-event").reset();
     document.getElementById("event-id").value = "";
+    document.getElementById("event-allday").checked = false;
+    document.getElementById("event-recurrence").value = "none";
+    document.getElementById("event-location").value = "";
+    document.getElementById("event-travel-time").value = "";
+    toggleEventAllDay();
 
     const now = new Date();
     now.setMinutes(0, 0, 0);
@@ -1229,9 +1374,9 @@ function openAddEvent(dateStr = "") {
     if (dateStr) {
         const d = new Date(dateStr);
         d.setHours(10, 0, 0, 0);
-        document.getElementById("event-start").value = formatDateTimeLocal(d);
+        document.getElementById("event-start").value = formatDateISO(d);
         d.setHours(11, 0, 0, 0);
-        document.getElementById("event-end").value = formatDateTimeLocal(d);
+        document.getElementById("event-end").value = formatDateISO(d);
     } else {
         document.getElementById("event-start").value = formatDateTimeLocal(now);
         now.setHours(now.getHours() + 1);
@@ -1254,8 +1399,15 @@ function openEditEvent(id) {
     document.getElementById("event-modal-title").innerText = "予定の編集";
     document.getElementById("event-id").value = ev.id;
     document.getElementById("event-title").value = ev.title;
+    
+    document.getElementById("event-allday").checked = !!ev.allDay;
+    toggleEventAllDay();
+
     document.getElementById("event-start").value = ev.start;
     document.getElementById("event-end").value = ev.end || "";
+    document.getElementById("event-recurrence").value = ev.recurrence || "none";
+    document.getElementById("event-location").value = ev.location || "";
+    document.getElementById("event-travel-time").value = ev.travelTime || "";
     document.getElementById("event-notes").value = ev.notes || "";
 
     // 色
@@ -1330,13 +1482,27 @@ function openDayDetails(date, dayEvents, dayTodos, dayWeekly) {
             item.style.justifyContent = "space-between";
             item.style.alignItems = "center";
 
-            const startT = ev.start.split("T")[1] || "";
-            const endT = ev.end ? ev.end.split("T")[1] : "";
-            const timeText = startT ? ` (🕒 ${startT}${endT ? '〜' + endT : ''})` : '';
+            let timeText = "";
+            if (ev.allDay) {
+                timeText = " (🕒 終日)";
+            } else {
+                const startT = ev.start.split("T")[1] || "";
+                const endT = ev.end ? ev.end.split("T")[1] : "";
+                timeText = startT ? ` (🕒 ${startT}${endT ? '〜' + endT : ''})` : '';
+            }
+
+            let extraText = "";
+            if (ev.location) extraText += `📍 場所: ${ev.location} `;
+            if (ev.travelTime) extraText += `🚗 移動: ${ev.travelTime}分 `;
+            if (ev.recurrence && ev.recurrence !== 'none') {
+                const recurLabels = { daily: '毎日', weekly: '毎週', monthly: '毎月' };
+                extraText += `🔄 ${recurLabels[ev.recurrence]} `;
+            }
 
             item.innerHTML = `
                 <div style="flex:1;">
                     <div style="font-weight:600; font-size:0.85rem;">📌 予定: ${ev.title}${timeText}</div>
+                    ${extraText ? `<div style="font-size:0.75rem; color:var(--primary); font-weight:500; margin-top:2px;">${extraText}</div>` : ''}
                     ${ev.notes ? `<div style="font-size:0.7rem; color:var(--text-secondary); margin-top:2px;">${ev.notes}</div>` : ''}
                 </div>
                 <div style="display:flex; gap:6px;">
@@ -1455,6 +1621,7 @@ function initEventListeners() {
             priority: document.getElementById("todo-priority").value,
             deadline: document.getElementById("todo-deadline").value,
             notes: document.getElementById("todo-notes").value,
+            recurrence: document.getElementById("todo-recurrence").value,
             completed: id ? state.todos.find(t => t.id === id).completed : false
         };
 
@@ -1478,13 +1645,18 @@ function initEventListeners() {
         e.preventDefault();
 
         const id = document.getElementById("event-id").value;
+        const travelVal = document.getElementById("event-travel-time").value;
         const newEvent = {
             id: id || "ev-" + Date.now(),
             title: document.getElementById("event-title").value,
             start: document.getElementById("event-start").value,
             end: document.getElementById("event-end").value,
             color: document.getElementById("event-color").value,
-            notes: document.getElementById("event-notes").value
+            notes: document.getElementById("event-notes").value,
+            allDay: document.getElementById("event-allday").checked,
+            recurrence: document.getElementById("event-recurrence").value,
+            location: document.getElementById("event-location").value,
+            travelTime: travelVal ? parseInt(travelVal) : 0
         };
 
         if (id) {
@@ -1532,6 +1704,12 @@ function initEventListeners() {
     document.getElementById("todo-filter-all").onclick = () => setTodoFilter('all');
     document.getElementById("todo-filter-active").onclick = () => setTodoFilter('active');
     document.getElementById("todo-filter-completed").onclick = () => setTodoFilter('completed');
+
+    // Todo並び替えセレクトボックス
+    document.getElementById("todo-sort-select").onchange = (e) => {
+        currentTodoSort = e.target.value;
+        renderTodoList();
+    };
 
     // Todoカテゴリタグフィルターボタン
     document.getElementById("tag-filter-all").onclick = () => setTagFilter('all');
@@ -1822,6 +2000,20 @@ function compressImage(base64Str, maxWidth, quality, callback) {
                 return;
             }
 
+            // カレンダー表示時の月切り替え（次月・前月）
+            if (currentPageId === 'page-calendar') {
+                if (diffX > 0) {
+                    // 左スワイプ ➔ 次の月へ
+                    const nextBtn = document.getElementById("cal-next");
+                    if (nextBtn) nextBtn.click();
+                } else {
+                    // 右スワイプ ➔ 前の月へ
+                    const prevBtn = document.getElementById("cal-prev");
+                    if (prevBtn) prevBtn.click();
+                }
+                return;
+            }
+
             // 現在のページが配列の何番目にあるかを取得
             let currentIndex = PAGE_ORDER.indexOf(currentPageId);
             if (currentIndex === -1) return;
@@ -1831,12 +2023,9 @@ function compressImage(base64Str, maxWidth, quality, callback) {
                 // 【左スワイプ】指を右から左へ動かした ⇒ 次の画面へ
                 if (currentIndex < PAGE_ORDER.length - 1) {
                     const nextPageId = PAGE_ORDER[currentIndex + 1];
-                    // 既存のナビゲーションクリック関数を呼び出す
-                    // （※関数名が異なる場合は既存の切り替え関数名に合わせてください）
                     if (typeof switchPage === 'function') {
                         switchPage(nextPageId);
                     } else {
-                        // フォールバック（直接クラスを切り替える）
                         executePageChange(nextPageId);
                     }
                 }
