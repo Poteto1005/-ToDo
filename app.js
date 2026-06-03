@@ -102,6 +102,20 @@ function loadData() {
         state = JSON.parse(JSON.stringify(SAMPLE_DATA));
         saveData();
     }
+
+    // データの整合性を保証するガードレール
+    if (!state) state = {};
+    if (!Array.isArray(state.weeklySchedule)) state.weeklySchedule = [];
+    if (!Array.isArray(state.todos)) state.todos = [];
+    if (!Array.isArray(state.events)) state.events = [];
+    if (!state.settings || typeof state.settings !== 'object') {
+        state.settings = { saturday: true, mondayStart: true, theme: 'light' };
+    } else {
+        if (state.settings.saturday === undefined) state.settings.saturday = true;
+        if (state.settings.mondayStart === undefined) state.settings.mondayStart = true;
+        if (state.settings.theme === undefined) state.settings.theme = 'light';
+    }
+    if (state.timetableImage === undefined) state.timetableImage = "";
 }
 
 function saveData() {
@@ -111,7 +125,6 @@ function saveData() {
 function initTheme() {
     const theme = state.settings.theme || 'light';
     document.documentElement.setAttribute('data-theme', theme);
-    document.getElementById('theme-icon').innerText = theme === 'dark' ? '☀️' : '🌙';
 }
 
 // ==========================================
@@ -367,8 +380,12 @@ function renderWeeklyPlanner() {
                             <span class="tag-badge ${schedule.category}" style="margin-left:6px; font-size:0.6rem;">${CATEGORIES[schedule.category].label}</span>
                         </div>
                     </div>
-                    <div class="time-block-actions">
-                        <button class="todo-delete-btn" onclick="deleteWeeklySchedule('${schedule.id}', event)">🗑️</button>
+                    <div class="menu-container" onclick="event.stopPropagation()">
+                        <button class="menu-toggle" onclick="toggleActionMenu('${schedule.id}', event)">⋮</button>
+                        <div class="action-menu" id="menu-${schedule.id}">
+                            <button class="action-menu-item" onclick="openEditWeeklyEvent('${schedule.id}'); closeAllMenus();">✏️ 編集</button>
+                            <button class="action-menu-item delete" onclick="deleteWeeklySchedule('${schedule.id}', event); closeAllMenus();">🗑️ 削除</button>
+                        </div>
                     </div>
                 `;
                 list.appendChild(item);
@@ -380,69 +397,256 @@ function renderWeeklyPlanner() {
     });
 }
 
-// --- 3. 見比べ画面 (左右分割ビュー) の描画 ---
+// --- 3. 見比べ画面 (スプリットビュー) の描画 ---
 function renderSplitView() {
-    // 左側：週間スケジュールの概要
-    const leftContainer = document.getElementById("split-weekly-content");
-    leftContainer.innerHTML = "";
+    const now = new Date();
+    const dateStr = `${now.getMonth() + 1}月${now.getDate()}日 (${DAYS[now.getDay()]})`;
+    const dateEl = document.getElementById("split-date");
+    if (dateEl) dateEl.innerText = dateStr;
 
-    const showSatSun = state.settings.saturday;
-    let dayOrder = state.settings.mondayStart
-        ? (showSatSun ? [1, 2, 3, 4, 5, 6, 0] : [1, 2, 3, 4, 5])
-        : (showSatSun ? [0, 1, 2, 3, 4, 5, 6] : [0, 1, 2, 3, 4, 5]);
+    // 左側：今日のスケジュール（タイムライン ＆ 空き時間）
+    const leftContainer = document.getElementById("split-schedule-content");
+    if (leftContainer) {
+        leftContainer.innerHTML = "";
 
-    let html = `<div style="display:flex; flex-direction:column; gap:8px;">`;
-    dayOrder.forEach(day => {
-        const daySchedules = state.weeklySchedule.filter(w => w.day === day);
-        let itemsHTML = [];
+        const todayDayOfWeek = now.getDay();
+        const todayDateISO = formatDateISO(now);
 
-        daySchedules.forEach(schedule => {
-            itemsHTML.push(`
-                <span style="background-color:${schedule.color}; color:white; padding:2px 6px; border-radius:4px; font-size:0.68rem; font-weight:500;">
-                    ${schedule.title}
-                </span>
-            `);
+        // 今日の習慣予定と単発予定
+        const todayWeekly = state.weeklySchedule.filter(w => w.day === todayDayOfWeek);
+        const todayEvents = state.events.filter(ev => ev.start.split("T")[0] === todayDateISO);
+
+        // 予定を分単位にパース
+        let parsed = [];
+        let dayStart = 480;  // 08:00
+        let dayEnd = 1320;   // 22:00
+
+        todayWeekly.forEach(w => {
+            let start, end;
+            if (w.timeblock === 'morning') {
+                start = 480; // 08:00
+                end = 600;   // 10:00
+            } else if (w.timeblock === 'afternoon') {
+                start = 780; // 13:00
+                end = 900;   // 15:00
+            } else if (w.timeblock === 'evening') {
+                start = 1080; // 18:00
+                end = 1200;   // 20:00
+            } else {
+                const sParts = (w.startTime || "09:00").split(":");
+                start = parseInt(sParts[0]) * 60 + parseInt(sParts[1]);
+                const eParts = (w.endTime || "10:00").split(":");
+                end = parseInt(eParts[0]) * 60 + parseInt(eParts[1]);
+                if (end <= start) end = start + 60;
+            }
+            parsed.push({
+                id: w.id,
+                title: w.title,
+                start: start,
+                end: end,
+                color: w.color || "var(--primary)",
+                type: 'weekly',
+                category: w.category,
+                notes: w.notes
+            });
         });
 
-        html += `
-            <div style="padding:8px; border-bottom:1px solid var(--border); display:flex; flex-direction:column; gap:4px;">
-                <div style="font-weight:700; font-size:0.8rem; color:var(--primary);">${DAYS[day]}曜日</div>
-                <div style="display:flex; flex-wrap:wrap; gap:6px;">
-                    ${itemsHTML.length > 0 ? itemsHTML.join("") : '<span style="font-size:0.7rem; color:var(--text-secondary);">予定なし</span>'}
-                </div>
-            </div>
-        `;
-    });
-    html += `</div>`;
-    leftContainer.innerHTML = html;
+        todayEvents.forEach(ev => {
+            const startStr = ev.start.split("T")[1] || "09:00";
+            const sParts = startStr.split(":");
+            const start = parseInt(sParts[0]) * 60 + parseInt(sParts[1]);
+            
+            let end;
+            if (ev.end) {
+                const endStr = ev.end.split("T")[1] || "10:00";
+                const eParts = endStr.split(":");
+                end = parseInt(eParts[0]) * 60 + parseInt(eParts[1]);
+            } else {
+                end = start + 60;
+            }
+            if (end <= start) end = start + 60;
 
-    // 右側：Todoリストの簡略描画
+            parsed.push({
+                id: ev.id,
+                title: ev.title,
+                start: start,
+                end: end,
+                color: ev.color || "var(--accent-blue)",
+                type: 'event',
+                notes: ev.notes
+            });
+        });
+
+        // 開始時間順にソート
+        parsed.sort((a, b) => a.start - b.start);
+
+        // 活動範囲を実際の予定に合わせて拡張
+        parsed.forEach(p => {
+            if (p.start < dayStart) dayStart = p.start;
+            if (p.end > dayEnd) dayEnd = p.end;
+        });
+
+        // 重複予定のマージ
+        let merged = [];
+        parsed.forEach(p => {
+            if (merged.length === 0) {
+                merged.push({
+                    start: p.start,
+                    end: p.end,
+                    items: [p]
+                });
+            } else {
+                let last = merged[merged.length - 1];
+                if (p.start < last.end) {
+                    last.end = Math.max(last.end, p.end);
+                    last.items.push(p);
+                } else {
+                    merged.push({
+                        start: p.start,
+                        end: p.end,
+                        items: [p]
+                    });
+                }
+            }
+        });
+
+        // 空き時間を含むタイムラインを構築
+        let timelineItems = [];
+        let current = dayStart;
+
+        merged.forEach(block => {
+            // 予定ブロックの前に10分以上の空きがあるか
+            if (block.start - current >= 10) {
+                timelineItems.push({
+                    type: 'free',
+                    start: current,
+                    end: block.start
+                });
+            }
+            // 予定ブロックを追加
+            timelineItems.push({
+                type: 'busy',
+                start: block.start,
+                end: block.end,
+                items: block.items
+            });
+            current = block.end;
+        });
+
+        // 最後の空き時間
+        if (dayEnd - current >= 10) {
+            timelineItems.push({
+                type: 'free',
+                start: current,
+                end: dayEnd
+            });
+        }
+
+        const formatTime = (min) => {
+            const h = String(Math.floor(min / 60)).padStart(2, '0');
+            const m = String(min % 60).padStart(2, '0');
+            return `${h}:${m}`;
+        };
+
+        if (timelineItems.length === 0) {
+            leftContainer.innerHTML = `<div class="dash-item empty">☕ 今日の予定はありません。</div>`;
+        } else {
+            timelineItems.forEach(item => {
+                if (item.type === 'free') {
+                    const diffMin = item.end - item.start;
+                    const hours = Math.floor(diffMin / 60);
+                    const mins = diffMin % 60;
+                    const durationText = hours > 0 ? (mins > 0 ? `${hours}時間${mins}分` : `${hours}時間`) : `${mins}分`;
+                    const rangeText = `${formatTime(item.start)} 〜 ${formatTime(item.end)}`;
+
+                    const slot = document.createElement("div");
+                    slot.className = "timeline-free-slot";
+                    slot.innerHTML = `
+                        <div class="timeline-free-slot-left">
+                            <span class="timeline-free-time-range">${rangeText}</span>
+                            <span class="timeline-free-label">💡 空き時間：${durationText}</span>
+                        </div>
+                        <button class="btn-timeline-add" onclick="openAddEventFromTimeline('${formatTime(item.start)}', '${formatTime(item.end)}')">＋ 予定を追加</button>
+                    `;
+                    leftContainer.appendChild(slot);
+                } else {
+                    // busyスロット
+                    item.items.forEach(p => {
+                        const slot = document.createElement("div");
+                        slot.className = "timeline-slot";
+                        slot.style.borderLeftColor = p.color;
+
+                        const catBadge = p.category ? `
+                            <span class="tag-badge ${p.category}" style="margin-left: 8px;">
+                                ${CATEGORIES[p.category].icon} ${CATEGORIES[p.category].label}
+                            </span>
+                        ` : '';
+
+                        slot.innerHTML = `
+                            <div style="flex: 1;">
+                                <div style="font-weight: 700; font-size: 0.9rem;">
+                                    🕒 ${formatTime(p.start)} 〜 ${formatTime(p.end)} : ${p.title}
+                                    ${catBadge}
+                                </div>
+                                ${p.notes ? `<div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">${p.notes}</div>` : ''}
+                            </div>
+                            <div class="menu-container" onclick="event.stopPropagation()">
+                                <button class="menu-toggle" onclick="toggleActionMenu('${p.id}', event)">⋮</button>
+                                <div class="action-menu" id="menu-${p.id}">
+                                    <button class="action-menu-item" onclick="openEditEventOrWeekly('${p.id}', '${p.type}'); closeAllMenus();">✏️ 編集</button>
+                                    <button class="action-menu-item delete" onclick="deleteEventOrWeekly('${p.id}', '${p.type}', event); closeAllMenus();">🗑️ 削除</button>
+                                </div>
+                            </div>
+                        `;
+                        leftContainer.appendChild(slot);
+                    });
+                }
+            });
+        }
+    }
+
+    // 右側：Todoリスト（締め切り間近のTodoを簡略描画）
     const rightContainer = document.getElementById("split-todo-content");
-    rightContainer.innerHTML = "";
+    if (rightContainer) {
+        rightContainer.innerHTML = "";
 
-    const activeTodos = state.todos.filter(t => !t.completed);
-    if (activeTodos.length === 0) {
-        rightContainer.innerHTML = `<div class="dash-item empty" style="font-size:0.8rem; padding:15px;">未完了のTodoはありません</div>`;
-    } else {
-        activeTodos.forEach(todo => {
-            const countdownInfo = getCountdown(todo.deadline);
-            const countdownClass = countdownInfo.days <= 1 ? "danger" : (countdownInfo.days <= 3 ? "warning" : "safe");
+        // 締め切りの近い順にソートした未完了Todo
+        const activeTodos = state.todos
+            .filter(t => !t.completed)
+            .sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
 
-            const card = document.createElement("div");
-            card.className = "todo-item-card";
-            card.style.padding = "10px 12px";
-            card.innerHTML = `
-                <div class="todo-left" style="gap:8px;">
-                    <div class="todo-checkbox" onclick="toggleTodoCompleted('${todo.id}', event)"></div>
-                    <div class="todo-info-group">
-                        <div class="todo-main-title" style="font-size:0.85rem;">${todo.title}</div>
-                        <div style="font-size:0.65rem; color:var(--text-secondary);">📅 ${formatDateShort(todo.deadline)}</div>
+        if (activeTodos.length === 0) {
+            rightContainer.innerHTML = `<div class="dash-item empty" style="font-size:0.85rem; padding:15px;">未完了のTodoはありません。</div>`;
+        } else {
+            activeTodos.forEach(todo => {
+                const countdownInfo = getCountdown(todo.deadline);
+                const countdownClass = countdownInfo.days <= 1 ? "danger" : (countdownInfo.days <= 3 ? "warning" : "safe");
+
+                const card = document.createElement("div");
+                card.className = "todo-item-card";
+                card.style.padding = "12px 14px";
+                card.innerHTML = `
+                    <div class="todo-left" style="gap:8px;">
+                        <div class="todo-checkbox" onclick="toggleTodoCompleted('${todo.id}', event)"></div>
+                        <div class="todo-info-group">
+                            <div class="todo-main-title" style="font-size:0.9rem;">${todo.title}</div>
+                            <div style="font-size:0.7rem; color:var(--text-secondary);">📅 ${formatDateShort(todo.deadline)}</div>
+                        </div>
                     </div>
-                </div>
-                <div class="todo-countdown ${countdownClass}" style="font-size:0.65rem; padding:2px 8px;">${countdownInfo.text}</div>
-            `;
-            rightContainer.appendChild(card);
-        });
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <div class="todo-countdown ${countdownClass}" style="font-size:0.65rem; padding:2px 8px;">${countdownInfo.text}</div>
+                        <div class="menu-container" onclick="event.stopPropagation()">
+                            <button class="menu-toggle" onclick="toggleActionMenu('${todo.id}', event)">⋮</button>
+                            <div class="action-menu" id="menu-${todo.id}">
+                                <button class="action-menu-item" onclick="openEditTodo('${todo.id}', event); closeAllMenus();">✏️ 編集</button>
+                                <button class="action-menu-item delete" onclick="deleteTodo('${todo.id}', event); closeAllMenus();">🗑️ 削除</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                rightContainer.appendChild(card);
+            });
+        }
     }
 }
 
@@ -450,8 +654,6 @@ function renderSplitView() {
 function renderCalendar() {
     const year = currentCalendarDate.getFullYear();
     const month = currentCalendarDate.getMonth(); // 0-11
-
-    document.getElementById("calendar-month-year").innerText = `${year}年 ${month + 1}月`;
 
     const isMonStart = state.settings.mondayStart;
     const showSatSun = state.settings.saturday;
@@ -465,6 +667,17 @@ function renderCalendar() {
     }
 
     const cols = weekDaysIndices.length;
+
+    // ==== 週ビューか月ビューか ====
+    if (currentCalendarView === 'week') {
+        renderWeekView(weekDaysIndices, cols, showSatSun);
+    } else {
+        renderMonthView(year, month, weekDaysIndices, cols, showSatSun);
+    }
+}
+
+function renderMonthView(year, month, weekDaysIndices, cols, showSatSun) {
+    document.getElementById("calendar-month-year").innerText = `${year}年 ${month + 1}月`;
 
     // ==== 曜日ヘッダー（別要素）の描画 ====
     const weekdayHeader = document.getElementById("calendar-weekday-header");
@@ -528,14 +741,72 @@ function renderCalendar() {
         }
     }
 
-    // セル描画
+    renderCalendarCells(cells, grid, true);
+}
+
+function renderWeekView(weekDaysIndices, cols, showSatSun) {
+    // 現在の日付から週の先頭を算出
+    const baseDate = new Date(currentCalendarDate);
+    const dow = baseDate.getDay();
+    const gridStartDow = weekDaysIndices[0];
+    const diff = (dow - gridStartDow + 7) % 7;
+    const weekStart = new Date(baseDate);
+    weekStart.setDate(baseDate.getDate() - diff);
+
+    // 週の日付リストを構築
+    let cells = [];
+    for (let i = 0; i < cols; i++) {
+        const d = new Date(weekStart);
+        d.setDate(weekStart.getDate() + i);
+        cells.push({ date: d, currentMonth: true });
+    }
+
+    // ヘッダータイトルを週の範囲で表示
+    const weekEnd = cells[cells.length - 1].date;
+    const startStr = `${weekStart.getMonth() + 1}/${weekStart.getDate()}`;
+    const endStr = `${weekEnd.getMonth() + 1}/${weekEnd.getDate()}`;
+    document.getElementById("calendar-month-year").innerText = `${weekStart.getFullYear()}年 ${startStr}〜${endStr}`;
+
+    // ==== 曜日ヘッダー描画 ====
+    const weekdayHeader = document.getElementById("calendar-weekday-header");
+    weekdayHeader.innerHTML = "";
+    weekdayHeader.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+
+    cells.forEach(c => {
+        const idx = c.date.getDay();
+        const hCell = document.createElement("div");
+        hCell.className = "calendar-day-header";
+        if (idx === 6) hCell.classList.add("sat-col");
+        if (idx === 0) hCell.classList.add("sun-col");
+        // 週ビューでは曜日＋日付を表示
+        hCell.innerText = `${DAYS[idx]}\n${c.date.getDate()}`;
+        hCell.style.whiteSpace = "pre-line";
+        hCell.style.lineHeight = "1.3";
+        hCell.style.fontSize = "0.7rem";
+        weekdayHeader.appendChild(hCell);
+    });
+
+    // ==== グリッド描画 (1行のみ) ====
+    const grid = document.getElementById("calendar-grid");
+    grid.innerHTML = "";
+    grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+
+    renderCalendarCells(cells, grid, false);
+}
+
+function renderCalendarCells(cells, grid, isMonth) {
     const today = new Date();
     const todayISO = formatDateISO(today);
 
     cells.forEach(c => {
         const cell = document.createElement("div");
         cell.className = "calendar-day-cell";
-        if (!c.currentMonth) cell.classList.add("other-month");
+        if (isMonth && !c.currentMonth) cell.classList.add("other-month");
+
+        // 週ビューのセルは高さを大きく
+        if (!isMonth) {
+            cell.style.minHeight = "120px";
+        }
 
         const dateISO = formatDateISO(c.date);
 
@@ -662,9 +933,12 @@ function renderTodoList() {
             </div>
             <div class="todo-right">
                 <div class="todo-countdown ${countdownClass}">${todo.completed ? '完了' : countdownInfo.text}</div>
-                <div style="display: flex; gap: 8px; margin-top:4px;">
-                    <button class="todo-delete-btn" onclick="openEditTodo('${todo.id}', event)" title="編集">✏️</button>
-                    <button class="todo-delete-btn" onclick="deleteTodo('${todo.id}', event)" title="削除">🗑️</button>
+                <div class="menu-container" style="margin-top:4px;" onclick="event.stopPropagation()">
+                    <button class="menu-toggle" onclick="toggleActionMenu('${todo.id}', event)">⋮</button>
+                    <div class="action-menu" id="menu-${todo.id}">
+                        <button class="action-menu-item" onclick="openEditTodo('${todo.id}', event); closeAllMenus();">✏️ 編集</button>
+                        <button class="action-menu-item delete" onclick="deleteTodo('${todo.id}', event); closeAllMenus();">🗑️ 削除</button>
+                    </div>
                 </div>
             </div>
         `;
@@ -674,6 +948,10 @@ function renderTodoList() {
 
 // --- 6. 設定・画像管理画面の描画 ---
 function renderSettings() {
+    const darkThemeToggle = document.getElementById("setting-dark-theme");
+    if (darkThemeToggle) {
+        darkThemeToggle.checked = (state.settings.theme === 'dark');
+    }
     document.getElementById("setting-saturday").checked = state.settings.saturday;
     document.getElementById("setting-monday-start").checked = state.settings.mondayStart;
 
@@ -697,30 +975,61 @@ function switchPage(pageId, title) {
     document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
 
     // 対象ページ表示
-    document.getElementById("page-" + pageId).classList.add("active");
+    const targetPage = document.getElementById("page-" + pageId);
+    if (targetPage) targetPage.classList.add("active");
 
     // ヘッダータイトル更新
-    document.getElementById("header-title").innerText = title;
+    const headerTitle = document.getElementById("header-title");
+    if (headerTitle) headerTitle.innerText = title;
 
-    // ナビボタンのアクティブ更新
+    // ヘッダーボタンのアクティブ更新
+    const dashBtn = document.getElementById("header-btn-dashboard");
+    const setBtn = document.getElementById("header-btn-settings");
+    if (dashBtn) dashBtn.classList.remove("active");
+    if (setBtn) setBtn.classList.remove("active");
+
+    if (pageId === "dashboard" && dashBtn) dashBtn.classList.add("active");
+    if (pageId === "settings" && setBtn) setBtn.classList.add("active");
+
+    // ボトムナビボタンのアクティブ更新
     document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
-    document.getElementById("nav-" + pageId).classList.add("active");
+    const navBtn = document.getElementById("nav-" + pageId);
+    if (navBtn) navBtn.classList.add("active");
 
-    // FAB制御 (見比べ・設定では非表示)
+    // FAB制御 (合同・設定では非表示)
     const fab = document.getElementById("fab");
-    if (pageId === "split" || pageId === "settings") {
-        fab.style.display = "none";
-    } else {
-        fab.style.display = "flex";
+    if (fab) {
+        if (pageId === "split" || pageId === "settings") {
+            fab.style.display = "none";
+        } else {
+            fab.style.display = "flex";
+        }
     }
 
     // 各ページ描画の更新
     if (pageId === 'dashboard') renderDashboard();
-    if (pageId === 'timetable') renderWeeklyPlanner();
     if (pageId === 'split') renderSplitView();
     if (pageId === 'calendar') renderCalendar();
     if (pageId === 'todo') renderTodoList();
     if (pageId === 'settings') renderSettings();
+}
+
+// カレンダービュー切り替え（月/週）
+let currentCalendarView = 'month';
+function switchCalendarView(view) {
+    currentCalendarView = view;
+    const monthBtn = document.getElementById('btn-view-month');
+    const weekBtn = document.getElementById('btn-view-week');
+    if (monthBtn && weekBtn) {
+        if (view === 'month') {
+            monthBtn.classList.add('active');
+            weekBtn.classList.remove('active');
+        } else {
+            weekBtn.classList.add('active');
+            monthBtn.classList.remove('active');
+        }
+    }
+    renderCalendar();
 }
 
 function openModal(id) {
@@ -1094,13 +1403,8 @@ function openAddEventFromSelector() {
 // ==========================================
 
 function initEventListeners() {
-    // テーマ切り替え
-    document.getElementById("theme-toggle").addEventListener("click", () => {
-        const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-        state.settings.theme = theme;
-        saveData();
-        initTheme();
-    });
+    // 画面外クリック時にポップアップメニューを閉じる
+    document.addEventListener("click", closeAllMenus);
 
     // FABクリック ➡ モーダル選択表示
     document.getElementById("fab").addEventListener("click", () => {
@@ -1204,11 +1508,19 @@ function initEventListeners() {
 
     // カレンダー前後移動 ・ 今日へ戻る
     document.getElementById("cal-prev").onclick = () => {
-        currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
+        if (currentCalendarView === 'week') {
+            currentCalendarDate.setDate(currentCalendarDate.getDate() - 7);
+        } else {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
+        }
         renderCalendar();
     };
     document.getElementById("cal-next").onclick = () => {
-        currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
+        if (currentCalendarView === 'week') {
+            currentCalendarDate.setDate(currentCalendarDate.getDate() + 7);
+        } else {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
+        }
         renderCalendar();
     };
     document.getElementById("cal-today").onclick = () => {
@@ -1229,6 +1541,16 @@ function initEventListeners() {
     document.getElementById("tag-filter-other").onclick = () => setTagFilter('other');
 
     // 設定スイッチ
+    // ダークモード切り替え
+    const darkThemeToggle = document.getElementById("setting-dark-theme");
+    if (darkThemeToggle) {
+        darkThemeToggle.onchange = (e) => {
+            state.settings.theme = e.target.checked ? 'dark' : 'light';
+            saveData();
+            initTheme();
+        };
+    }
+
     document.getElementById("setting-saturday").onchange = (e) => {
         state.settings.saturday = e.target.checked;
         saveData();
@@ -1281,6 +1603,63 @@ function initEventListeners() {
             renderSettings();
         }
     };
+
+    // === 見比べ画面のレジライザー(仕切り線)ドラッグ処理 ===
+    const splitContainer = document.getElementById("split-container");
+    const splitLeft = document.getElementById("split-left");
+    const splitDivider = document.getElementById("split-divider");
+
+    let isResizing = false;
+
+    const startResize = (e) => {
+        isResizing = true;
+        splitDivider.classList.add("active");
+        document.body.classList.add("resizing-active");
+    };
+
+    const resize = (e) => {
+        if (!isResizing) return;
+
+        // ドラッグ中は画面スクロール等のデフォルト挙動を防止
+        if (e.cancelable) e.preventDefault();
+
+        const containerRect = splitContainer.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+        const isMobile = window.innerWidth < 768;
+
+        if (isMobile) {
+            // 上下分割: 高さ比率を計算
+            const percentage = ((clientY - containerRect.top) / containerRect.height) * 100;
+            const constrained = Math.max(15, Math.min(85, percentage));
+            splitLeft.style.height = `calc(${constrained}% - 8px)`;
+            splitLeft.style.width = ""; // 横幅指定をクリア
+        } else {
+            // 左右分割: 幅比率を計算
+            const percentage = ((clientX - containerRect.left) / containerRect.width) * 100;
+            const constrained = Math.max(15, Math.min(85, percentage));
+            splitLeft.style.width = `calc(${constrained}% - 8px)`;
+            splitLeft.style.height = ""; // 高さ指定をクリア
+        }
+    };
+
+    const stopResize = () => {
+        if (isResizing) {
+            isResizing = false;
+            splitDivider.classList.remove("active");
+            document.body.classList.remove("resizing-active");
+        }
+    };
+
+    splitDivider.addEventListener("mousedown", startResize);
+    splitDivider.addEventListener("touchstart", startResize, { passive: true });
+
+    document.addEventListener("mousemove", resize);
+    document.addEventListener("touchmove", resize, { passive: false });
+
+    document.addEventListener("mouseup", stopResize);
+    document.addEventListener("touchend", stopResize);
 }
 
 // 状態フィルター適用
@@ -1398,7 +1777,7 @@ function compressImage(base64Str, maxWidth, quality, callback) {
     // ==========================================
 
     // 画面の並び順を定義（HTMLの各ページIDと一致）
-    const PAGE_ORDER = ['page-dashboard', 'page-planner', 'page-calendar', 'page-todo', 'page-split'];
+    const PAGE_ORDER = ['page-dashboard', 'page-calendar', 'page-todo', 'page-split'];
 
     let touchStartX = 0;
     let touchStartY = 0;
@@ -1502,5 +1881,61 @@ function compressImage(base64Str, maxWidth, quality, callback) {
             };
             headerTitle.innerText = pageNames[pageId] || 'ライフ・オーガナイザー';
         }
+    }
+}
+
+// ポップアップメニュー制御用
+function toggleActionMenu(id, event) {
+    if (event) event.stopPropagation();
+    const menu = document.getElementById(`menu-${id}`);
+    if (!menu) return;
+    const isShow = menu.classList.contains('show');
+    closeAllMenus();
+    if (!isShow) {
+        menu.classList.add('show');
+    }
+}
+
+function closeAllMenus() {
+    document.querySelectorAll('.action-menu').forEach(m => m.classList.remove('show'));
+}
+
+// タイムラインの空き時間から予定を追加する処理
+function openAddEventFromTimeline(startTime, endTime) {
+    const now = new Date();
+    const dateStr = formatDateISO(now);
+    
+    document.getElementById("event-modal-title").innerText = "予定の追加";
+    document.getElementById("form-event").reset();
+    document.getElementById("event-id").value = "";
+
+    document.getElementById("event-start").value = `${dateStr}T${startTime}`;
+    document.getElementById("event-end").value = `${dateStr}T${endTime}`;
+
+    document.getElementById("event-color").value = THEME_COLORS[1];
+    const picker = document.getElementById("event-color-picker");
+    if (picker && picker.children.length > 1) {
+        picker.querySelectorAll(".color-option").forEach(o => o.classList.remove("selected"));
+        picker.children[1].classList.add("selected");
+    }
+
+    openModal("modal-event-edit");
+}
+
+// 見比べ画面からの編集・削除の振り分けヘルパー
+function openEditEventOrWeekly(id, type) {
+    if (type === 'weekly') {
+        openEditWeeklyEvent(id);
+    } else {
+        openEditEvent(id);
+    }
+}
+
+function deleteEventOrWeekly(id, type, event) {
+    if (type === 'weekly') {
+        deleteWeeklySchedule(id, event);
+    } else {
+        if (event) event.stopPropagation();
+        deleteEvent(id);
     }
 }
