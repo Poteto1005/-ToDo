@@ -414,9 +414,33 @@ function renderWeeklyPlanner() {
 }
 
 // --- 3. 見比べ画面 (スプリットビュー) の描画 ---
+let splitDateOffset = 0; // 0=今日, 1=翌日, -1=前日...
+
+function moveSplitDate(direction) {
+    if (direction === 0) {
+        splitDateOffset = 0; // 今日に戻る
+    } else {
+        splitDateOffset += direction;
+    }
+    renderSplitView();
+}
+
 function renderSplitView() {
-    const now = new Date();
-    const dateStr = `${now.getMonth() + 1}月${now.getDate()}日 (${DAYS[now.getDay()]})`;
+    const baseDate = new Date();
+    baseDate.setHours(0, 0, 0, 0);
+    baseDate.setDate(baseDate.getDate() + splitDateOffset);
+
+    const isToday = splitDateOffset === 0;
+    const dateStr = `${baseDate.getMonth() + 1}月${baseDate.getDate()}日 (${DAYS[baseDate.getDay()]})`;
+
+    // タイトルの切り替え
+    const titleEl = document.getElementById("split-schedule-title");
+    if (titleEl) {
+        titleEl.innerText = isToday
+            ? "本日のスケジュール"
+            : `${baseDate.getMonth() + 1}月${baseDate.getDate()}日のスケジュール`;
+    }
+
     const dateEl = document.getElementById("split-date");
     if (dateEl) dateEl.innerText = dateStr;
 
@@ -425,10 +449,10 @@ function renderSplitView() {
     if (leftContainer) {
         leftContainer.innerHTML = "";
 
-        const todayDayOfWeek = now.getDay();
-        const todayDateISO = formatDateISO(now);
+        const todayDayOfWeek = baseDate.getDay();
+        const todayDateISO = formatDateISO(baseDate);
 
-        // 今日の習慣予定と単発予定
+        // 選択日の習慣予定と単発予定
         const todayWeekly = state.weeklySchedule.filter(w => w.day === todayDayOfWeek);
         const todayEvents = state.events.filter(ev => isEventOnDate(ev, todayDateISO));
 
@@ -581,7 +605,8 @@ function renderSplitView() {
         };
 
         if (timelineItems.length === 0) {
-            leftContainer.innerHTML = `<div class="dash-item empty">☕ 今日の予定はありません。</div>`;
+            const emptyMsg = isToday ? "☕ 今日の予定はありません。" : `☕ この日の予定はありません。`;
+            leftContainer.innerHTML = `<div class="dash-item empty">${emptyMsg}</div>`;
         } else {
             timelineItems.forEach(item => {
                 if (item.type === 'free') {
@@ -730,6 +755,9 @@ function renderMonthView(year, month, weekDaysIndices, cols, showSatSun) {
     // ==== 日付グリッドの描画 ====
     const grid = document.getElementById("calendar-grid");
     grid.innerHTML = "";
+    // 週ビューから戻った際のstyleリセット
+    grid.style.display = "";
+    grid.style.padding = "";
     grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
 
     // 月初の日付情報
@@ -1297,7 +1325,10 @@ function switchPage(pageId, title) {
 
     // 各ページ描画の更新
     if (pageId === 'dashboard') renderDashboard();
-    if (pageId === 'split') renderSplitView();
+    if (pageId === 'split') {
+        splitDateOffset = 0; // 合同タブを開くときは常に今日から
+        renderSplitView();
+    }
     if (pageId === 'calendar') renderCalendar();
     if (pageId === 'todo') renderTodoList();
     if (pageId === 'settings') renderSettings();
@@ -1327,6 +1358,33 @@ function openModal(id) {
 
 function closeModal(id) {
     document.getElementById(id).classList.remove("active");
+}
+
+// カスタム確認ダイアログ（confirm()の代替）
+function showConfirmDialog(message, onConfirm) {
+    const overlay = document.getElementById("modal-confirm");
+    const msgEl = document.getElementById("confirm-dialog-message");
+    const okBtn = document.getElementById("confirm-dialog-ok");
+    const cancelBtn = document.getElementById("confirm-dialog-cancel");
+
+    if (!overlay || !msgEl || !okBtn || !cancelBtn) return;
+
+    msgEl.innerText = message;
+    overlay.classList.add("active");
+
+    // 既存のリスナーを一度削除（重複防止）
+    const newOkBtn = okBtn.cloneNode(true);
+    const newCancelBtn = cancelBtn.cloneNode(true);
+    okBtn.parentNode.replaceChild(newOkBtn, okBtn);
+    cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+
+    newOkBtn.addEventListener("click", () => {
+        overlay.classList.remove("active");
+        onConfirm();
+    });
+    newCancelBtn.addEventListener("click", () => {
+        overlay.classList.remove("active");
+    });
 }
 
 // カラーピッカー初期化
@@ -1492,14 +1550,14 @@ function openEditWeeklyEvent(id) {
 
 function deleteWeeklySchedule(id, event) {
     if (event) event.stopPropagation();
-    if (confirm("この予定を削除しますか？")) {
+    showConfirmDialog("この予定を削除しますか？", () => {
         state.weeklySchedule = state.weeklySchedule.filter(w => w.id !== id);
         saveData();
         renderWeeklyPlanner();
         renderDashboard();
         renderSplitView();
         renderCalendar();
-    }
+    });
 }
 
 // --- Todo処理 ---
@@ -1544,14 +1602,14 @@ function openEditTodo(id, event) {
 
 function deleteTodo(id, event) {
     if (event) event.stopPropagation();
-    if (confirm("このTodoを削除しますか？")) {
+    showConfirmDialog("このTodoを削除しますか？", () => {
         state.todos = state.todos.filter(t => t.id !== id);
         saveData();
         renderTodoList();
         renderDashboard();
         renderSplitView();
         renderCalendar();
-    }
+    });
 }
 
 function toggleTodoCompleted(id, event) {
