@@ -43,6 +43,14 @@
     padding: 0;
 }
 
+html {
+    background-color: #E2E8F0;
+    transition: background-color 0.3s ease;
+}
+[data-theme="dark"] html {
+    background-color: #0F172A;
+}
+
 body {
     font-family: 'Outfit', 'Noto Sans JP', sans-serif;
     background-color: var(--bg-primary);
@@ -52,6 +60,12 @@ body {
     flex-direction: column;
     overflow: hidden;
     transition: background-color 0.3s ease, color 0.3s ease;
+    max-width: 430px;
+    margin: 0 auto;
+    position: relative;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.15);
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
 }
 
 /* Header */
@@ -644,10 +658,10 @@ main {
 }
 
 .priority-badge {
-    padding: 2px 6px;
+    padding: 4px 8px;
     border-radius: 4px;
     font-weight: 600;
-    font-size: 0.65rem;
+    font-size: 0.85rem;
 }
 
 .priority-badge.high {
@@ -871,7 +885,7 @@ main {
 
 /* Navigation Bar (Fixed bottom menu) */
 nav {
-    position: fixed;
+    position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
@@ -918,7 +932,7 @@ nav button.active .nav-icon {
 
 /* Floating Action Button */
 .fab {
-    position: fixed;
+    position: absolute;
     bottom: 85px;
     right: 20px;
     background: linear-gradient(135deg, var(--primary), var(--accent-blue));
@@ -944,7 +958,7 @@ nav button.active .nav-icon {
 
 /* Dialog / Modal Styling */
 .modal-overlay {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
     right: 0;
@@ -968,15 +982,19 @@ nav button.active .nav-icon {
 .modal {
     background-color: var(--bg-secondary);
     border-radius: var(--radius-lg);
-    width: 90%;
-    max-width: 450px;
-    max-height: 85vh;
-    overflow-y: auto;
+    width: 92%;
+    max-width: 420px;
+    max-height: 88vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
     padding: 24px;
+    padding-top: 20px;
     box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.25);
     border: 1px solid var(--border);
     transform: translateY(20px);
     transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
 }
 
 .modal-overlay.active .modal {
@@ -985,27 +1003,98 @@ nav button.active .nav-icon {
 
 .modal-header {
     display: flex;
-    justify-between: space-between;
     align-items: center;
     margin-bottom: 20px;
+    padding-right: 36px;
+    min-height: 32px;
+    flex-shrink: 0;
+}
+
+.modal form, .modal-body, #day-events-list {
+    overflow-y: auto;
+    flex: 1;
+    padding-right: 4px;
 }
 
 .modal-title {
-    font-size: 1.15rem;
+    font-size: 1.1rem;
     font-weight: 700;
     color: var(--text-primary);
 }
 
 .modal-close {
-    background: none;
-    border: none;
-    font-size: 1.2rem;
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    font-size: 1rem;
     color: var(--text-secondary);
     cursor: pointer;
-    padding: 4px;
+    padding: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: var(--transition);
+    z-index: 10;
+}
+
+.modal-close:hover {
+    background-color: var(--accent-red);
+    color: white;
+    border-color: var(--accent-red);
+    transform: scale(1.1);
+}
+
+/* 直接削除・編集ボタン (三点バーの代替) */
+.item-action-btns {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.btn-item-delete {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 6px;
+    font-size: 1rem;
+    border-radius: 6px;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.btn-item-delete:hover {
+    color: var(--accent-red);
+    background-color: rgba(239, 68, 68, 0.1);
+}
+
+.btn-item-edit {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 6px;
+    font-size: 1rem;
+    border-radius: 6px;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.btn-item-edit:hover {
+    color: var(--primary);
+    background-color: var(--primary-light);
 }
 
 /* Inputs and Forms */
@@ -1401,7 +1490,7 @@ input:checked + .slider:before {
     }
 
     .calendar-day-cell {
-        min-height: 44px !important;
+        min-height: 72px !important;
         padding: 3px 2px !important;
     }
     
@@ -1418,23 +1507,29 @@ input:checked + .slider:before {
         font-size: 0.65rem !important;
     }
 
+    /* モバイルでもイベントラベルを表示 */
     .calendar-events-container {
-        flex-direction: row !important;
-        flex-wrap: wrap !important;
-        justify-content: center !important;
+        flex-direction: column !important;
         gap: 2px !important;
     }
 
     .calendar-event-dot {
-        display: none !important;
+        display: block !important;
+        font-size: 0.55rem !important;
+        padding: 1px 3px !important;
+        border-radius: 3px !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        max-width: 100% !important;
     }
 
-    .calendar-event-mini-dot {
-        display: inline-block !important;
-    }
-    
     .calendar-more {
-        display: none !important;
+        display: block !important;
+        font-size: 0.55rem !important;
+        color: var(--text-secondary) !important;
+        padding: 1px 2px !important;
+        background: transparent !important;
     }
 
     .view-toggle-container {
@@ -1456,4 +1551,198 @@ input:checked + .slider:before {
         padding: 5px 7px;
         font-size: 0.7rem;
     }
+}
+
+/* ============================
+   週ビュー バーチカルレイアウト
+   ============================ */
+.week-view-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 200px);
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background-color: var(--bg-secondary);
+}
+
+.week-header-row {
+    display: flex;
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--border);
+    background-color: var(--bg-secondary);
+    position: sticky;
+    top: 0;
+    z-index: 5;
+}
+
+.week-header-time-col {
+    width: 44px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--border);
+}
+
+.week-header-days {
+    display: grid;
+    flex: 1;
+    /* JS側でgrid-template-columnsを設定 */
+}
+
+.week-header-day-cell {
+    text-align: center;
+    padding: 6px 2px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    border-right: 1px solid var(--border);
+}
+
+.week-header-day-cell:last-child {
+    border-right: none;
+}
+
+.week-header-day-cell.sat-col { color: #3b82f6; }
+.week-header-day-cell.sun-col { color: #ef4444; }
+
+.week-header-day-cell.today-col .week-day-num {
+    background-color: var(--primary);
+    color: white;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+}
+
+.week-day-name {
+    font-size: 0.6rem;
+    color: var(--text-secondary);
+    display: block;
+}
+
+.week-scroll-body {
+    overflow-y: auto;
+    flex: 1;
+    position: relative;
+}
+
+.week-time-grid {
+    display: flex;
+    min-height: 1440px; /* 24時間 × 60px/時 */
+}
+
+.week-hours-col {
+    width: 44px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--border);
+    position: relative;
+}
+
+.week-hour-label {
+    position: absolute;
+    font-size: 0.58rem;
+    color: var(--text-secondary);
+    right: 6px;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+.week-columns {
+    flex: 1;
+    display: grid;
+    position: relative;
+    /* JS側でgrid-template-columnsを設定 */
+}
+
+.week-day-col {
+    position: relative;
+    border-right: 1px solid var(--border);
+}
+
+.week-day-col:last-child {
+    border-right: none;
+}
+
+.week-grid-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background-color: var(--border);
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.week-grid-line-half {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 1px;
+    border-top: 1px dashed var(--border);
+    opacity: 0.3;
+    pointer-events: none;
+}
+
+.week-event-card {
+    position: absolute;
+    left: 2px;
+    right: 2px;
+    border-radius: 5px;
+    padding: 2px 4px;
+    font-size: 0.62rem;
+    font-weight: 600;
+    color: white;
+    overflow: hidden;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    z-index: 2;
+    line-height: 1.3;
+    min-height: 18px;
+}
+
+.week-event-card:hover {
+    opacity: 0.88;
+    transform: scale(1.01);
+    z-index: 3;
+}
+
+.week-event-card .ev-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+}
+
+.week-event-card .ev-time {
+    font-size: 0.55rem;
+    opacity: 0.85;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+}
+
+/* 現在時刻インジケーター */
+.week-time-indicator {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: #ef4444;
+    z-index: 4;
+    pointer-events: none;
+}
+
+.week-time-indicator::before {
+    content: '';
+    position: absolute;
+    left: -4px;
+    top: -4px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #ef4444;
 }

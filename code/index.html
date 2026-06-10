@@ -1,34 +1,38 @@
 <!DOCTYPE html>
 <html lang="ja" data-theme="light">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ライフ・オーガナイザー - スケジュール＆Todo管理</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
     <!-- ヘッダー -->
     <header>
         <div class="header-left">
-            <button id="header-btn-dashboard" class="header-icon-btn active" onclick="switchPage('dashboard', 'ダッシュボード')" title="ダッシュボード">🏠</button>
+            <button id="header-btn-dashboard" class="header-icon-btn active"
+                onclick="switchPage('dashboard', 'ダッシュボード')" title="ダッシュボード">🏠</button>
             <div class="header-logo">
                 <span style="font-size: 1.2rem;">🎯</span>
                 <h1 id="header-title">ダッシュボード</h1>
             </div>
         </div>
         <div class="header-right">
-            <button id="header-btn-settings" class="header-icon-btn" onclick="switchPage('settings', '設定')" title="設定">⚙️</button>
+            <button id="header-btn-settings" class="header-icon-btn" onclick="switchPage('settings', '設定・画像')"
+                title="設定・画像">⚙️</button>
         </div>
     </header>
 
     <!-- メインコンテンツ -->
     <main>
-        
+
         <!-- 1. ダッシュボード画面 -->
         <div id="page-dashboard" class="page active">
             <div class="dashboard-grid">
-                
+
                 <!-- 今日の一日（スケジュール） -->
                 <div class="card">
                     <div class="card-title">
@@ -48,25 +52,29 @@
                             <div style="font-weight: 600; font-size: 0.95rem;">Todo達成率</div>
                             <div style="font-size: 0.75rem; color: var(--text-secondary);">今日のタスクをクリアしましょう！</div>
                         </div>
-                        
+
                         <!-- 円形進捗ゲージ -->
                         <div class="progress-ring-container">
                             <svg class="progress-ring-svg">
-                                <circle class="progress-ring-circle-bg" cx="35" cy="35" r="30"/>
-                                <circle class="progress-ring-circle" id="progress-circle" cx="35" cy="35" r="30"/>
+                                <circle class="progress-ring-circle-bg" cx="35" cy="35" r="30" />
+                                <circle class="progress-ring-circle" id="progress-circle" cx="35" cy="35" r="30" />
                             </svg>
                             <span class="progress-text" id="progress-percent-text">0%</span>
                         </div>
                     </div>
-                    
+
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px;">
-                        <div style="background-color: var(--bg-primary); padding: 10px; border-radius: var(--radius-sm); text-align: center;">
+                        <div
+                            style="background-color: var(--bg-primary); padding: 10px; border-radius: var(--radius-sm); text-align: center;">
                             <div style="font-size: 0.7rem; color: var(--text-secondary);">完了タスク</div>
-                            <div style="font-size: 1.25rem; font-weight: 700; color: var(--accent-green);" id="todo-completed-count">0</div>
+                            <div style="font-size: 1.25rem; font-weight: 700; color: var(--accent-green);"
+                                id="todo-completed-count">0</div>
                         </div>
-                        <div style="background-color: var(--bg-primary); padding: 10px; border-radius: var(--radius-sm); text-align: center;">
+                        <div
+                            style="background-color: var(--bg-primary); padding: 10px; border-radius: var(--radius-sm); text-align: center;">
                             <div style="font-size: 0.7rem; color: var(--text-secondary);">未完了タスク</div>
-                            <div style="font-size: 1.25rem; font-weight: 700; color: var(--accent-orange);" id="todo-active-count">0</div>
+                            <div style="font-size: 1.25rem; font-weight: 700; color: var(--accent-orange);"
+                                id="todo-active-count">0</div>
                         </div>
                     </div>
                 </div>
@@ -87,7 +95,7 @@
 
 
 
-        <!-- 3. 合同画面 (左右分割) -->
+        <!-- 3. 見比べ画面 (左右分割) -->
         <div id="page-split" class="page">
             <div class="split-container" id="split-container">
                 <!-- 左側：本日のスケジュールタイムライン -->
@@ -114,7 +122,7 @@
             </div>
         </div>
 
-        <!-- 4. スケジュール画面（カレンダー） -->
+        <!-- 4. スケジュール画面（旧カレンダー） -->
         <div id="page-calendar" class="page">
             <div class="calendar-controls">
                 <div style="display: flex; gap: 8px; align-items: center;">
@@ -127,7 +135,8 @@
                 </div>
                 <!-- 週・月切り替えセグメントコントロール -->
                 <div class="view-toggle-container">
-                    <button id="btn-view-month" class="view-toggle-btn active" onclick="switchCalendarView('month')">月</button>
+                    <button id="btn-view-month" class="view-toggle-btn active"
+                        onclick="switchCalendarView('month')">月</button>
                     <button id="btn-view-week" class="view-toggle-btn" onclick="switchCalendarView('week')">週</button>
                 </div>
             </div>
@@ -152,12 +161,18 @@
                     <button class="btn btn-secondary" id="todo-filter-completed">完了済み</button>
                 </div>
                 <!-- カテゴリタグフィルター -->
-                <div style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; border-top: 1px solid var(--border); padding-top: 8px;">
-                    <button class="btn btn-secondary" style="font-size:0.75rem; padding: 4px 10px;" id="tag-filter-all">全タグ</button>
-                    <button class="btn btn-secondary" style="font-size:0.75rem; padding: 4px 10px;" id="tag-filter-work">💼 仕事</button>
-                    <button class="btn btn-secondary" style="font-size:0.75rem; padding: 4px 10px;" id="tag-filter-private">🏠 プライベート</button>
-                    <button class="btn btn-secondary" style="font-size:0.75rem; padding: 4px 10px;" id="tag-filter-shopping">🛒 買い物</button>
-                    <button class="btn btn-secondary" style="font-size:0.75rem; padding: 4px 10px;" id="tag-filter-other">💡 その他</button>
+                <div
+                    style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; border-top: 1px solid var(--border); padding-top: 8px;">
+                    <button class="btn btn-secondary" style="font-size:0.75rem; padding: 4px 10px;"
+                        id="tag-filter-all">全タグ</button>
+                    <button class="btn btn-secondary" style="font-size:0.75rem; padding: 4px 10px;"
+                        id="tag-filter-work">💼 仕事</button>
+                    <button class="btn btn-secondary" style="font-size:0.75rem; padding: 4px 10px;"
+                        id="tag-filter-private">🏠 プライベート</button>
+                    <button class="btn btn-secondary" style="font-size:0.75rem; padding: 4px 10px;"
+                        id="tag-filter-shopping">🛒 買い物</button>
+                    <button class="btn btn-secondary" style="font-size:0.75rem; padding: 4px 10px;"
+                        id="tag-filter-other">💡 その他</button>
                 </div>
             </div>
             <div class="todo-list-wrapper" id="todo-list-container">
@@ -185,7 +200,6 @@
 
             <div class="card">
                 <div class="card-title">表示設定</div>
-                <!-- ダークモード切り替え -->
                 <div class="setting-item">
                     <div>
                         <div style="font-weight: 600; font-size: 0.9rem;">ダークモード</div>
@@ -259,11 +273,13 @@
                 <button class="modal-close" onclick="closeModal('modal-add-selector')">✕</button>
             </div>
             <div style="display: flex; flex-direction: column; gap: 12px;">
-                <button class="btn btn-secondary" onclick="openAddTodoFromSelector()" style="justify-content: flex-start; padding: 14px;">
+                <button class="btn btn-secondary" onclick="openAddTodoFromSelector()"
+                    style="justify-content: flex-start; padding: 14px;">
                     <span style="font-size: 1.25rem; margin-right: 8px;">✅</span>
                     Todo（期限ありのタスク）を追加する
                 </button>
-                <button class="btn btn-secondary" onclick="openAddEventFromSelector()" style="justify-content: flex-start; padding: 14px;">
+                <button class="btn btn-secondary" onclick="openAddEventFromSelector()"
+                    style="justify-content: flex-start; padding: 14px;">
                     <span style="font-size: 1.25rem; margin-right: 8px;">📅</span>
                     特定の日の予定をカレンダーに追加する
                 </button>
@@ -280,7 +296,7 @@
             </div>
             <form id="form-weekly">
                 <input type="hidden" id="weekly-id">
-                
+
                 <div class="form-group">
                     <label for="weekly-title">予定・ルーティン名 *</label>
                     <input type="text" id="weekly-title" class="form-control" placeholder="例: ヨガ教室、英会話、ゴミ出し" required>
@@ -308,7 +324,7 @@
                         </select>
                     </div>
                 </div>
-                
+
                 <!-- 具体的な時間設定 (時間指定選択時のみ表示) -->
                 <div class="form-row" id="weekly-time-input-row" style="display: none;">
                     <div class="form-group">
@@ -344,9 +360,10 @@
                     <label for="weekly-notes">詳細メモ</label>
                     <textarea id="weekly-notes" class="form-control" rows="2" placeholder="持ち物、場所、備考など"></textarea>
                 </div>
-                
+
                 <div style="display: flex; gap: 10px; margin-top: 20px;">
-                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-weekly-edit')" style="flex: 1;">キャンセル</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-weekly-edit')"
+                        style="flex: 1;">キャンセル</button>
                     <button type="submit" class="btn btn-primary" style="flex: 1;">保存する</button>
                 </div>
             </form>
@@ -364,7 +381,8 @@
                 <input type="hidden" id="todo-id">
                 <div class="form-group">
                     <label for="todo-title">タスク名 *</label>
-                    <input type="text" id="todo-title" class="form-control" placeholder="例: レポート提出、食材買い出し、メール返信" required>
+                    <input type="text" id="todo-title" class="form-control" placeholder="例: レポート提出、食材買い出し、メール返信"
+                        required>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
@@ -385,16 +403,28 @@
                         </select>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label for="todo-deadline">締め切り日時 *</label>
-                    <input type="datetime-local" id="todo-deadline" class="form-control" required>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="todo-deadline">締め切り日時 *</label>
+                        <input type="datetime-local" id="todo-deadline" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="todo-recurrence">繰り返し</label>
+                        <select id="todo-recurrence" class="form-control">
+                            <option value="none">なし</option>
+                            <option value="daily">毎日</option>
+                            <option value="weekly">毎週</option>
+                            <option value="monthly">毎月</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label for="todo-notes">メモ詳細</label>
                     <textarea id="todo-notes" class="form-control" rows="2" placeholder="詳細や参考URLなど"></textarea>
                 </div>
                 <div style="display: flex; gap: 10px; margin-top: 20px;">
-                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-todo-edit')" style="flex: 1;">キャンセル</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-todo-edit')"
+                        style="flex: 1;">キャンセル</button>
                     <button type="submit" class="btn btn-primary" style="flex: 1;">保存する</button>
                 </div>
             </form>
@@ -414,15 +444,38 @@
                     <label for="event-title">予定タイトル *</label>
                     <input type="text" id="event-title" class="form-control" placeholder="例: 美容院、ミーティング、旅行" required>
                 </div>
+                <div class="form-row" style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                    <div class="form-group" style="display: flex; align-items: center; gap: 8px; margin-bottom: 0;">
+                        <input type="checkbox" id="event-allday" onchange="toggleEventAllDay()" style="width: 18px; height: 18px; cursor: pointer;">
+                        <label for="event-allday" style="margin-bottom: 0; cursor: pointer;">終日予定にする</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="event-start" id="lbl-event-start">開始日時 *</label>
+                    <input type="datetime-local" id="event-start" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="event-end" id="lbl-event-end">終了日時</label>
+                    <input type="datetime-local" id="event-end" class="form-control">
+                </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="event-start">開始日時 *</label>
-                        <input type="datetime-local" id="event-start" class="form-control" required>
+                        <label for="event-recurrence">繰り返し</label>
+                        <select id="event-recurrence" class="form-control">
+                            <option value="none">なし</option>
+                            <option value="daily">毎日</option>
+                            <option value="weekly">毎週</option>
+                            <option value="monthly">毎月</option>
+                        </select>
                     </div>
                     <div class="form-group">
-                        <label for="event-end">終了日時</label>
-                        <input type="datetime-local" id="event-end" class="form-control">
+                        <label for="event-travel-time">移動時間 (分)</label>
+                        <input type="number" id="event-travel-time" class="form-control" placeholder="例: 30" min="0">
                     </div>
+                </div>
+                <div class="form-group">
+                    <label for="event-location">場所</label>
+                    <input type="text" id="event-location" class="form-control" placeholder="例: 会議室A、カフェ">
                 </div>
                 <div class="form-group">
                     <label>テーマカラー</label>
@@ -436,7 +489,8 @@
                     <textarea id="event-notes" class="form-control" rows="2" placeholder="持ち物や場所など"></textarea>
                 </div>
                 <div style="display: flex; gap: 10px; margin-top: 20px;">
-                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-event-edit')" style="flex: 1;">キャンセル</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-event-edit')"
+                        style="flex: 1;">キャンセル</button>
                     <button type="submit" class="btn btn-primary" style="flex: 1;">保存する</button>
                 </div>
             </form>
@@ -450,11 +504,13 @@
                 <h3 class="modal-title" id="day-details-title">2026年5月27日 の予定</h3>
                 <button class="modal-close" onclick="closeModal('modal-day-details')">✕</button>
             </div>
-            <div id="day-events-list" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; max-height: 300px; overflow-y: auto;">
+            <div id="day-events-list"
+                style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; max-height: 300px; overflow-y: auto;">
                 <!-- JSでその日の予定を表示 -->
             </div>
             <div style="display: flex; gap: 8px;">
-                <button class="btn btn-secondary" onclick="closeModal('modal-day-details')" style="flex: 1;">閉じる</button>
+                <button class="btn btn-secondary" onclick="closeModal('modal-day-details')"
+                    style="flex: 1;">閉じる</button>
                 <button class="btn btn-primary" id="btn-add-event-for-day" style="flex: 1;">＋ 予定を追加</button>
             </div>
         </div>
@@ -463,4 +519,5 @@
     <!-- アプリケーションロジック -->
     <script src="app.js"></script>
 </body>
+
 </html>
