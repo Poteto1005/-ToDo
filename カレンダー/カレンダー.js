@@ -3,9 +3,11 @@ const selectedDateText = document.getElementById("selectedDate");
 const scheduleList = document.getElementById("scheduleList");
 const fab = document.querySelector(".fab");
 
-let selectedDay = null;
+let selectedDay =
+Number(localStorage.getItem("selectedDay")) || null;
 
-const schedules = {};
+let schedules =
+JSON.parse(localStorage.getItem("schedules")) || {};
 
 const categories = [
     "学校",
@@ -22,6 +24,10 @@ for(let i=1;i<=31;i++){
     day.classList.add("day");
     day.textContent = i;
 
+    if(i === selectedDay){
+        day.classList.add("selected");
+    }
+
     day.addEventListener("click",()=>{
 
         document.querySelectorAll(".day")
@@ -31,6 +37,11 @@ for(let i=1;i<=31;i++){
 
         selectedDay = i;
 
+        localStorage.setItem(
+            "selectedDay",
+            selectedDay
+        );
+
         selectedDateText.textContent =
         `${i}日を選択中`;
 
@@ -38,6 +49,11 @@ for(let i=1;i<=31;i++){
     });
 
     calendarDays.appendChild(day);
+}
+
+if(selectedDay){
+    selectedDateText.textContent =
+    `${selectedDay}日を選択中`;
 }
 
 // 予定追加
@@ -73,6 +89,11 @@ fab.addEventListener("click",()=>{
         end,
         allDay
     });
+
+    localStorage.setItem(
+        "schedules",
+        JSON.stringify(schedules)
+    );
 
     renderSchedules();
 });
@@ -111,3 +132,5 @@ function renderSchedules(){
         scheduleList.appendChild(card);
     });
 }
+
+renderSchedules();
