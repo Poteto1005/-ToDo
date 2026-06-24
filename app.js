@@ -1311,13 +1311,31 @@ function renderSettings() {
 // 4. イベントハンドラー & 各種アクション
 // ==========================================
 
-function switchPage(pageId, title) {
-    // 全ページ非表示
-    document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+function switchPage(pageId, title, direction = null) {
+    // 全ページ非表示（スライドトランジション用のクラスもクリア）
+    document.querySelectorAll(".page").forEach(p => {
+        p.classList.remove("active", "page-slide-in-right", "page-slide-in-left");
+    });
 
     // 対象ページ表示
     const targetPage = document.getElementById("page-" + pageId);
-    if (targetPage) targetPage.classList.add("active");
+    if (targetPage) {
+        if (direction === 'left') {
+            targetPage.classList.add("page-slide-in-right");
+        } else if (direction === 'right') {
+            targetPage.classList.add("page-slide-in-left");
+        } else {
+            targetPage.classList.add("active");
+        }
+
+        // アニメーション完了後に active クラスに統一
+        if (direction) {
+            setTimeout(() => {
+                targetPage.classList.remove("page-slide-in-right", "page-slide-in-left");
+                targetPage.classList.add("active");
+            }, 300);
+        }
+    }
 
     // ヘッダータイトル更新
     const headerTitle = document.getElementById("header-title");
@@ -2186,6 +2204,8 @@ function initEventListeners() {
         });
     });
 
+    // スワイプナビゲーションの初期化
+    initSwipeNavigation();
 }
 
 // 状態フィルター適用
@@ -2598,4 +2618,84 @@ function rescheduleEvent(eventId, eventType) {
     const dateStr = `${newSlot.start.getMonth() + 1}/${newSlot.start.getDate()}`;
     const timeStr = `${String(newSlot.start.getHours()).padStart(2, '0')}:${String(newSlot.start.getMinutes()).padStart(2, '0')}`;
     showToast(`予定「${ev.title}」を ${dateStr} ${timeStr} にリスケしました！`, "success");
+}
+
+// 左右スワイプによる画面切り替え機能の初期化
+function initSwipeNavigation() {
+    const PAGE_ORDER = ['dashboard', 'calendar', 'split', 'todo', 'settings'];
+    const PAGE_TITLES = {
+        'dashboard': 'ダッシュボード',
+        'calendar': 'スケジュール',
+        'split': '合同',
+        'todo': 'Todoリスト',
+        'settings': '設定・画像'
+    };
+
+    let touchStartX = 0;
+    let touchStartY = 0;
+
+    const mainContainer = document.querySelector('main');
+    if (!mainContainer) return;
+
+    mainContainer.addEventListener('touchstart', (e) => {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+
+    mainContainer.addEventListener('touchend', (e) => {
+        const activePage = document.querySelector('.page.active');
+        if (!activePage) return;
+        
+        const currentPageId = activePage.id.replace('page-', '');
+
+        // 「合同（見比べ）」画面ではスライダー操作などと競合するため、スワイプ切り替えをロック
+        if (currentPageId === 'split') {
+            return;
+        }
+
+        const touchEndX = e.changedTouches[0].clientX;
+        const touchEndY = e.changedTouches[0].clientY;
+
+        const diffX = touchStartX - touchEndX;
+        const diffY = touchStartY - touchEndY;
+
+        // 誤作動防止: 縦スクロールの方が大きい場合は処理しない
+        if (Math.abs(diffY) > Math.abs(diffX)) {
+            return;
+        }
+
+        // 誤作動防止: 横の移動距離が50px未満の場合は無視
+        if (Math.abs(diffX) < 50) {
+            return;
+        }
+
+        // カレンダー画面では、月切り替え（次月・前月）を優先
+        if (currentPageId === 'calendar') {
+            if (diffX > 0) {
+                const nextBtn = document.getElementById("cal-next");
+                if (nextBtn) nextBtn.click();
+            } else {
+                const prevBtn = document.getElementById("cal-prev");
+                if (prevBtn) prevBtn.click();
+            }
+            return;
+        }
+
+        let currentIndex = PAGE_ORDER.indexOf(currentPageId);
+        if (currentIndex === -1) return;
+
+        if (diffX > 0) {
+            // 左スワイプ: 次の画面へ
+            if (currentIndex < PAGE_ORDER.length - 1) {
+                const nextPageId = PAGE_ORDER[currentIndex + 1];
+                switchPage(nextPageId, PAGE_TITLES[nextPageId], 'left');
+            }
+        } else {
+            // 右スワイプ: 前の画面へ
+            if (currentIndex > 0) {
+                const prevPageId = PAGE_ORDER[currentIndex - 1];
+                switchPage(prevPageId, PAGE_TITLES[prevPageId], 'right');
+            }
+        }
+    }, { passive: true });
 }
