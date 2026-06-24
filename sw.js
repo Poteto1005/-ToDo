@@ -4,7 +4,8 @@ const ASSETS = [
     './index.html',
     './style.css',
     './app.js',
-    './manifest.json'
+    './manifest.json',
+    './img/icon.png' // ✨ 末尾にコンマを忘れずに、この1行を追加します
 ];
 
 // インストール時にファイルをキャッシュに保存

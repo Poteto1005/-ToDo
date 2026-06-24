@@ -3,7 +3,7 @@
   "name": "TimeMatch - スケジュール＆Todo管理",
   "icons": [
     {
-      "src": "img/icon.png",
+      "src": "icon.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "any maskable"
