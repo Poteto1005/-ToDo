@@ -1695,10 +1695,11 @@ function openAddEvent(dateStr = "") {
     if (dateStr) {
         const d = new Date(dateStr);
         d.setHours(10, 0, 0, 0);
-        document.getElementById("event-start").value = formatDateISO(d);
+        document.getElementById("event-start").value = formatDateTimeLocal(d); // ← 修正
         d.setHours(11, 0, 0, 0);
-        document.getElementById("event-end").value = formatDateISO(d);
-    } else {
+        document.getElementById("event-end").value = formatDateTimeLocal(d);   // ← 修正
+    }
+    else {
         document.getElementById("event-start").value = formatDateTimeLocal(now);
         now.setHours(now.getHours() + 1);
         document.getElementById("event-end").value = formatDateTimeLocal(now);
@@ -2185,10 +2186,6 @@ function initEventListeners() {
         });
     });
 
-    // ==========================================
-    // スワイプ画面切り替え機能
-    // ==========================================
-    initSwipeNavigation();
 }
 
 // 状態フィルター適用
