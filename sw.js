@@ -1,10 +1,10 @@
-const CACHE_NAME = 'timematch-v3'; // ✨ キャッシュバージョンをv3に上げて更新を強制します
+const CACHE_NAME = 'timematch-v4'; // ✨ バージョンをv4に上げて更新を認識させます
 const ASSETS = [
     './',
     './index.html',
     './style.css',
     './app.js',
-    './manifest.json', // ✨ ここを追加しました
+    './manifest.json',
     './img/icon.png'
 ];
 
@@ -15,7 +15,8 @@ self.addEventListener('install', (e) => {
             return cache.addAll(ASSETS);
         })
     );
-    self.skipWaiting(); // 新しいバージョンにすぐ切り替える
+    // 🆕 新しいサービスワーカーが待機せず、すぐにアクティブになるように強制する
+    self.skipWaiting();
 });
 
 // オフライン時でもキャッシュからページを表示
