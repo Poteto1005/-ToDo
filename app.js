@@ -18,7 +18,7 @@ let state = {
 const DAYS = ["日", "月", "火", "水", "木", "金", "土"];
 const DAY_LABELS_JP = ["日曜日", "月曜日", "火曜日", "水曜日", "木曜日", "金曜日", "土曜日"];
 
-const CATEGORIES = {
+let CATEGORIES = {
     work: { label: "仕事", icon: "💼" },
     private: { label: "プライベート", icon: "🏠" },
     shopping: { label: "買い物", icon: "🛒" },
@@ -61,6 +61,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // カラーピッカー初期化
     initColorPickers();
     requestNotificationPermission(); // 起動時に通知許可をリクエスト
+    renderCategories();
 
 });
 
@@ -97,6 +98,9 @@ function loadData() {
     if (!Array.isArray(state.weeklySchedule)) state.weeklySchedule = [];
     if (!Array.isArray(state.todos)) state.todos = [];
     if (!Array.isArray(state.events)) state.events = [];
+    if (state.customCategories) {
+        Object.assign(CATEGORIES, state.customCategories);
+    }
     if (!state.settings || typeof state.settings !== 'object') {
         state.settings = { saturday: true, mondayStart: true, theme: 'light' };
     } else {
@@ -275,16 +279,10 @@ function renderDashboard() {
             item.className = "dash-item";
             item.style.borderLeftColor = todo.priority === 'high' ? 'var(--accent-red)' : (todo.priority === 'medium' ? 'var(--accent-yellow)' : 'var(--accent-green)');
 
-            const freeTime = calculateFreeTimeRemaining(todo.deadline);
-            const balancerClass = freeTime < 3 ? 'danger' : '';
-            const balancerIcon = freeTime < 3 ? '🚨' : '🕒';
-            const balancerBadge = `<span class="balancer-badge ${balancerClass}">${balancerIcon} 実質残り: ${freeTime}h</span>`;
-
             item.innerHTML = `
                 <div>
                     <div style="font-weight:700; font-size:0.95rem;">${todo.title}</div>
                     <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:4px; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-                        ${balancerBadge}
                         <span>🏷️ ${CATEGORIES[todo.category].icon} ${CATEGORIES[todo.category].label}</span>
                         <span>| 📅 締切: ${formatDate(todo.deadline)}</span>
                     </div>
@@ -320,6 +318,17 @@ function calculateTodoProgress() {
     document.getElementById("todo-completed-count").innerText = completedCount;
     document.getElementById("todo-active-count").innerText = activeCount;
     document.getElementById("progress-percent-text").innerText = `${percent}%`;
+    
+    const progressMsg = document.getElementById("progress-message");
+    if (progressMsg) {
+        if (totalCount > 0 && percent === 100) {
+            progressMsg.innerText = "よく頑張りました！🎉";
+            progressMsg.style.color = "var(--accent-green)";
+        } else {
+            progressMsg.innerText = "今日のタスクをクリアしましょう！";
+            progressMsg.style.color = "var(--text-secondary)";
+        }
+    }
 
     // 円のゲージオフセット更新 (r=30 の円の外周は 2*PI*r ≒ 188.4)
     const circle = document.getElementById("progress-circle");
@@ -537,7 +546,8 @@ function renderSplitView() {
                 end: end,
                 color: ev.color || "var(--accent-blue)",
                 type: 'event',
-                notes: notesText
+                notes: notesText,
+                allDay: ev.allDay
             });
         });
 
@@ -661,7 +671,7 @@ function renderSplitView() {
                         slot.innerHTML = `
                             <div style="flex: 1;">
                                 <div style="font-weight: 700; font-size: 0.9rem;">
-                                    🕒 ${formatTime(p.start)} 〜 ${formatTime(p.end)} : ${p.title}
+                                    ${p.allDay ? '終日：' : `🕒 ${formatTime(p.start)} 〜 ${formatTime(p.end)} : `} ${p.title}
                                     ${catBadge}
                                 </div>
                                 ${p.notes ? `<div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">${p.notes}</div>` : ''}
@@ -1256,21 +1266,12 @@ function renderTodoList() {
             </span>
         ` : '';
 
-        let balancerBadge = '';
-        if (!todo.completed) {
-            const freeTime = calculateFreeTimeRemaining(todo.deadline);
-            const balancerClass = freeTime < 3 ? 'danger' : '';
-            const balancerIcon = freeTime < 3 ? '🚨' : '🕒';
-            balancerBadge = `<span class="balancer-badge ${balancerClass}">${balancerIcon} 実質残り: ${freeTime}h</span>`;
-        }
-
         card.innerHTML = `
             <div class="todo-left">
                 <div class="todo-checkbox ${todo.completed ? 'checked' : ''}" onclick="toggleTodoCompleted('${todo.id}', event)"></div>
                 <div class="todo-info-group">
                     <div class="todo-main-title">${todo.title}</div>
                     <div class="todo-meta-info" style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-                        ${balancerBadge}
                         ${catBadge}
                         <span>📅 締切: ${formatDate(todo.deadline)}</span>
                         <span class="priority-badge ${todo.priority}">${todo.priority === 'high' ? '高' : (todo.priority === 'medium' ? '中' : '低')}</span>
@@ -1505,6 +1506,9 @@ function toggleEventAllDay() {
 }
 
 function isEventOnDate(ev, dateStr) {
+    if (ev.deletedDates && ev.deletedDates.includes(dateStr)) return false;
+    if (ev.recurrenceEndDate && dateStr >= ev.recurrenceEndDate) return false;
+
     const evStartStr = ev.start.split("T")[0];
 
     if (!ev.recurrence || ev.recurrence === 'none') {
@@ -1764,14 +1768,8 @@ function openEditEvent(id) {
     openModal("modal-event-edit");
 }
 
-function deleteEvent(id) {
-    if (confirm("この予定を削除しますか？")) {
-        state.events = state.events.filter(e => e.id !== id);
-        saveData();
-        closeModal("modal-day-details");
-        renderCalendar();
-        renderDashboard();
-    }
+function deleteEvent(id, event, dateStr) {
+    deleteEventOrWeekly(id, 'event', event, dateStr);
 }
 
 // カレンダー日付詳細モーダル
@@ -1872,7 +1870,7 @@ function openDayDetails(date, dayEvents, dayTodos, dayWeekly) {
                 <div>
                     <div style="font-weight:600; font-size:0.85rem; color:var(--accent-red);">⚠️ タスク締切: ${todo.title}</div>
                     <div style="font-size:0.7rem; color:var(--text-secondary); margin-top:2px;">
-                        期日: ${todo.deadline.split("T")[1] || "終日"} | 優先度: ${todo.priority}
+                        期日: ${todo.deadline.split("T")[1] || "終日"} | 優先度: ${todo.priority === 'high' ? '高' : (todo.priority === 'medium' ? '中' : '低')}
                     </div>
                 </div>
                 <button class="btn btn-secondary btn-adj" style="font-size:0.7rem; width:50px;" onclick="closeModal('modal-day-details'); switchPage('todo', 'Todoリスト');">移動</button>
@@ -2366,12 +2364,61 @@ function openEditEventOrWeekly(id, type) {
     }
 }
 
-function deleteEventOrWeekly(id, type, event) {
+let currentDelId = null;
+let currentDelType = null;
+let currentDelDate = null;
+
+function deleteEventOrWeekly(id, type, event, dateStr) {
+    if (event) event.stopPropagation();
+    currentDelId = id;
+    currentDelType = type;
+    currentDelDate = dateStr || activeDateForAdd || formatDateISO(currentCalendarDate);
+    
+    let isRecurring = false;
     if (type === 'weekly') {
-        deleteWeeklySchedule(id, event);
+        isRecurring = true;
     } else {
-        if (event) event.stopPropagation();
-        deleteEvent(id);
+        const ev = state.events.find(e => e.id === id);
+        if (ev && ev.recurrence && ev.recurrence !== 'none') isRecurring = true;
+    }
+    
+    if (isRecurring) {
+        openModal('modal-recurrence-delete');
+    } else {
+        if (confirm("この予定を削除しますか？")) {
+            executeDelete('all');
+        }
+    }
+}
+
+function executeDelete(mode) {
+    closeModal('modal-recurrence-delete');
+    let collection = currentDelType === 'weekly' ? state.weeklySchedule : state.events;
+    let item = collection.find(x => x.id === currentDelId);
+    if (!item) return;
+
+    if (mode === 'all') {
+        if (currentDelType === 'weekly') {
+            state.weeklySchedule = state.weeklySchedule.filter(x => x.id !== currentDelId);
+        } else {
+            state.events = state.events.filter(x => x.id !== currentDelId);
+        }
+    } else if (mode === 'this') {
+        if (!item.deletedDates) item.deletedDates = [];
+        item.deletedDates.push(currentDelDate);
+    } else if (mode === 'following') {
+        item.recurrenceEndDate = currentDelDate;
+    }
+    
+    saveData();
+    renderDashboard();
+    renderSplitView();
+    renderCalendar();
+    renderWeeklyPlanner();
+    
+    const detailsModal = document.getElementById("modal-day-details");
+    if (detailsModal && detailsModal.style.display === "flex") {
+        closeModal("modal-day-details");
     }
 }
 
@@ -2699,3 +2746,53 @@ function initSwipeNavigation() {
         }
     }, { passive: true });
 }
+
+function renderCategories() {
+    const todoSelect = document.getElementById("todo-category");
+    const weeklySelect = document.getElementById("weekly-category");
+    const filterContainer = document.getElementById("tag-filter-add-new")?.parentElement;
+    
+    if (state.customCategories) {
+        Object.keys(state.customCategories).forEach(key => {
+            const cat = state.customCategories[key];
+            if (todoSelect) {
+                const optTodo = document.createElement("option");
+                optTodo.value = key; optTodo.innerHTML = `${cat.icon} ${cat.label}`;
+                todoSelect.insertBefore(optTodo, todoSelect.querySelector('option[value="add_new"]'));
+            }
+            if (weeklySelect) {
+                const optWeekly = document.createElement("option");
+                optWeekly.value = key; optWeekly.innerHTML = `${cat.icon} ${cat.label}`;
+                weeklySelect.insertBefore(optWeekly, weeklySelect.querySelector('option[value="add_new"]'));
+            }
+            if (filterContainer) {
+                const btn = document.createElement("button");
+                btn.className = "btn btn-secondary";
+                btn.style.cssText = "font-size:0.75rem; padding: 4px 10px;";
+                btn.id = "tag-filter-" + key;
+                btn.innerHTML = `${cat.icon}<br>${cat.label}`;
+                btn.onclick = () => setTagFilter(key);
+                filterContainer.insertBefore(btn, document.getElementById("tag-filter-add-new"));
+            }
+        });
+    }
+}
+
+function addNewCustomTag() {
+    const name = prompt("新しいタグの名前を入力してください:");
+    if (!name) return;
+    const icon = prompt("タグの絵文字を入力してください (例: 📌):") || "📌";
+    
+    const tagId = 'custom_' + Date.now();
+    if (!state.customCategories) state.customCategories = {};
+    state.customCategories[tagId] = { label: name, icon: icon };
+    saveData();
+    location.reload();
+}
+
+document.getElementById('todo-category')?.addEventListener('change', function() {
+    if (this.value === 'add_new') { addNewCustomTag(); this.value = 'other'; }
+});
+document.getElementById('weekly-category')?.addEventListener('change', function() {
+    if (this.value === 'add_new') { addNewCustomTag(); this.value = 'other'; }
+});

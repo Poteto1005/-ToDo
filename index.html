@@ -53,7 +53,7 @@
                     <div class="stat-widget">
                         <div>
                             <div style="font-weight: 600; font-size: 0.95rem;">Todo達成率</div>
-                            <div style="font-size: 0.75rem; color: var(--text-secondary);">今日のタスクをクリアしましょう！</div>
+                            <div id="progress-message" style="font-size: 0.75rem; color: var(--text-secondary);">今日のタスクをクリアしましょう！</div>
                         </div>
 
                         <!-- 円形進捗ゲージ -->
@@ -194,6 +194,8 @@
                         id="tag-filter-shopping">🛒<br>買い物</button>
                     <button class="btn btn-secondary" style="font-size:0.75rem; padding: 4px 10px;"
                         id="tag-filter-other">💡<br>その他</button>
+                    <button class="btn btn-secondary" style="font-size:0.75rem; padding: 4px 10px;"
+                        id="tag-filter-add-new" onclick="addNewCustomTag()">➕<br>新規タグの追加</button>
                 </div>
             </div>
             <div class="todo-list-wrapper" id="todo-list-container">
@@ -366,6 +368,7 @@
                             <option value="private" selected>🏠 プライベート</option>
                             <option value="shopping">🛒 買い物</option>
                             <option value="other">💡 その他</option>
+                            <option value="add_new">➕ 新規タグの追加</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -413,6 +416,7 @@
                             <option value="private" selected>🏠 プライベート</option>
                             <option value="shopping">🛒 買い物</option>
                             <option value="other">💡 その他</option>
+                            <option value="add_new">➕ 新規タグの追加</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -547,6 +551,20 @@
             <div style="display: flex; gap: 10px;">
                 <button id="confirm-dialog-cancel" class="btn btn-secondary" style="flex: 1;">キャンセル</button>
                 <button id="confirm-dialog-ok" class="btn btn-danger" style="flex: 1;">削除する</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 7. 繰り返し予定削除モーダル -->
+    <div class="modal-overlay" id="modal-recurrence-delete">
+        <div class="modal" style="max-width: 320px; text-align: center;">
+            <div style="font-size: 1.8rem; margin-bottom: 12px;">🗑️</div>
+            <p style="font-size: 0.95rem; font-weight: 600; margin-bottom: 20px; color: var(--text-primary);">繰り返しの予定です。<br>どれを削除しますか？</p>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <button id="btn-delete-this" class="btn btn-danger" onclick="executeDelete('this')">この予定</button>
+                <button id="btn-delete-following" class="btn btn-danger" onclick="executeDelete('following')">以降すべての予定</button>
+                <button id="btn-delete-all" class="btn btn-danger" onclick="executeDelete('all')">すべての予定</button>
+                <button class="btn btn-secondary" onclick="closeModal('modal-recurrence-delete')">キャンセル</button>
             </div>
         </div>
     </div>

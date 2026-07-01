@@ -37,6 +37,19 @@
     --glass-border: rgba(255, 255, 255, 0.05);
 }
 
+[data-theme="dark"] .btn-today {
+    color: #A5B4FC;
+}
+[data-theme="dark"] .calendar-day-header {
+    color: #A5B4FC;
+}
+[data-theme="dark"] .calendar-day-header.sat-col {
+    color: #93C5FD;
+}
+[data-theme="dark"] .calendar-day-header.sun-col {
+    color: #FCA5A5;
+}
+
 * {
     box-sizing: border-box;
     margin: 0;
